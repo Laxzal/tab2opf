@@ -41,11 +41,14 @@ class CreateOPF:
         self.csv2html.importNounPluralDb()
         self.csv2html.hebrewPluralClean()
         self.csv2html.importVerbConjPresent()
+        self.csv2html.importVerbConjPast()
         self.csv2html.hebrewVerbsPresClean()
+        self.csv2html.hebrewVerbsPastClean()
         self.csv2html.hebrewWordsClean('word')
 
         self.csv2html.mergeNounPlurals()
         self.csv2html.mergeVerbPresent()
+        self.csv2html.mergeVerbPast()
 
         self.csv2html.extractForm()
         self.csv2html.createDefInflection()

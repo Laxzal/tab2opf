@@ -24,6 +24,8 @@ class SimpleCSV2HTML:
         self.list_file_names = []
         self.verb_conj_present_file = "/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents" \
                                       "/hebrew_dict/pealim_verb_present_table_db.csv"
+        self.verb_conj_past_file = "/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents/hebrew_dict" \
+                                   "/pealim_verb_past_table_db.csv"
         self.verb_conj_present = None
         # Automatic Functions to Run
         self.importDbFile()
@@ -46,6 +48,16 @@ class SimpleCSV2HTML:
         self.list_present_verb_columns = list(self.verb_conj_present.columns)
         # TODO Find a better method
 
+    def importVerbConjPast(self):
+        self.verb_conj_past = pd.read_csv(self.verb_conj_past_file)
+        print(self.verb_conj_past.head())
+        self.verb_conj_past.drop(columns=['english_word'], inplace=True)
+
+        self.verb_conj_past = self.verb_conj_past.pivot(index=['id'], columns=['verb_form', 'person', 'form', 'gender'])
+        data = [tuple(str(x) for x in tup) for tup in self.verb_conj_past.columns.values]
+        self.verb_conj_past.columns = ['_'.join(col) for col in data]
+        self.list_past_verb_columns = list(self.verb_conj_past.columns)
+
     def _cleanNiqqudChars(self, my_string):
         return ''.join(['' if 1456 <= ord(c) <= 1479 else c for c in my_string])
 
@@ -60,8 +72,14 @@ class SimpleCSV2HTML:
     def hebrewVerbsPresClean(self):
         self.verb_conj_present = self.verb_conj_present.applymap(self._cleanNiqqudChars)
 
+    def hebrewVerbsPastClean(self):
+        self.verb_conj_past = self.verb_conj_past.applymap(self._cleanNiqqudChars)
+
     def mergeVerbPresent(self):
         self.database = self.database.merge(self.verb_conj_present, left_on=['id'], right_index=True, how='outer')
+
+    def mergeVerbPast(self):
+        self.database = self.database.merge(self.verb_conj_past, left_on=['id'], right_index=True, how='outer')
 
     def mergeNounPlurals(self):
         self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state']], on=['id'], how='outer')
@@ -76,22 +94,49 @@ class SimpleCSV2HTML:
         from_value = str('מ')
         the_value = str('ה')
         to_value = str('ל')
+        in_value = str('ב')
+        that_value = str('ש')
         self.database['inflection_the'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else str('NaN'),
+            lambda x: str(the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
             axis=1)
         self.database['inflection_from'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(from_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else str(
-                'NaN'),
+            lambda x: str(from_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else
+            np.nan,
             axis=1)
         self.database['inflection_to'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(to_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else str('NaN'),
+            lambda x: str(to_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
+            axis=1)
+        self.database['inflection_in'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(in_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
+            axis=1)
+
+        self.database['inflection_the_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+            lambda x: str(the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
+                                                                  and pd.isnull(
+                        x['plural_state']) == False) else np.nan,
+            axis=1)
+        self.database['inflection_from_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+            lambda x: str(from_value + the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
+                                                                               and pd.isnull(
+                        x['plural_state']) == False)
+            else np.nan,
+            axis=1)
+        self.database['inflection_to_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+            lambda x: str(to_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
+                                                                 and pd.isnull(x['plural_state']) == False) else np.nan,
+            axis=1)
+        self.database['inflection_in_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+            lambda x: str(in_value + str(x['plural_state'])) if (
+                    x['part_of_speech_simplified'] == 'Noun' and pd.isnull(x['plural_state']) == False) else np.nan,
             axis=1)
         print(self.database['inflection_the'])
 
     def createSimpleDf(self):
         self.simplifiedDf_list = list(
-            ['id', 'word', 'part_of_speech_simplified', 'meaning', 'inflection_the', 'inflection_to', 'inflection_from',
-             'plural_state']) + self.list_present_verb_columns
+            ['id', 'word', 'part_of_speech_simplified', 'meaning', 'inflection_the', 'inflection_to', 'inflection_from'
+                , 'inflection_in',
+             'plural_state', 'inflection_the_plural', 'inflection_to_plural', 'inflection_from_plural'
+                , 'inflection_in_plural']) + self.list_present_verb_columns + self.list_past_verb_columns
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
@@ -147,7 +192,25 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 <idx:iform value="{hebrew_word_present_singular_masculine}"></idx:iform>
 <idx:iform value="{hebrew_word_present_singular_feminine}"></idx:iform>
 <idx:iform value="{hebrew_word_present_plural_masculine}"></idx:iform>
-<idx:iform value="{hebrew_word_present_plural_feminine}"></idx:iform>  
+<idx:iform value="{hebrew_word_present_plural_feminine}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_1_singular_masculine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_singular_feminine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_plural_masculine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_plural_feminine}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_2_singular_masculine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_singular_feminine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_plural_masculine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_plural_feminine}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_3_singular_masculine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_singular_feminine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_plural_masculine}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_plural_feminine}"></idx:iform>
+
+
+  
 </idx:infl> 
 </idx:orth>
 <p>{meaning}</p>
@@ -158,7 +221,22 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
            hebrew_word_present_singular_masculine=row['hebrew_word_present_singular_masculine'],
            hebrew_word_present_singular_feminine=row['hebrew_word_present_singular_feminine'],
            hebrew_word_present_plural_masculine=row['hebrew_word_present_plural_masculine'],
-           hebrew_word_present_plural_feminine=row['hebrew_word_present_plural_feminine'])
+           hebrew_word_present_plural_feminine=row['hebrew_word_present_plural_feminine'],
+           hebrew_word_past_1_singular_masculine=row['hebrew_word_past_1_singular_masculine'],
+           hebrew_word_past_1_singular_feminine=row['hebrew_word_past_1_singular_feminine'],
+           hebrew_word_past_1_plural_masculine=row['hebrew_word_past_1_plural_masculine'],
+           hebrew_word_past_1_plural_feminine=row['hebrew_word_past_1_plural_feminine'],
+
+           hebrew_word_past_2_singular_masculine=row['hebrew_word_past_2_singular_masculine'],
+           hebrew_word_past_2_singular_feminine=row['hebrew_word_past_2_singular_feminine'],
+           hebrew_word_past_2_plural_masculine=row['hebrew_word_past_2_plural_masculine'],
+           hebrew_word_past_2_plural_feminine=row['hebrew_word_past_2_plural_feminine'],
+
+           hebrew_word_past_3_singular_masculine=row['hebrew_word_past_3_singular_masculine'],
+           hebrew_word_past_3_singular_feminine=row['hebrew_word_past_3_singular_feminine'],
+           hebrew_word_past_3_plural_masculine=row['hebrew_word_past_3_plural_masculine'],
+           hebrew_word_past_3_plural_feminine=row['hebrew_word_past_3_plural_feminine'],
+           )
             )
         elif pospeech is True:
             fname.write(
@@ -170,6 +248,11 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 <idx:iform value="{inflection_the}"></idx:iform>
 <idx:iform value="{inflection_from}"></idx:iform>
 <idx:iform value="{inflection_to}"></idx:iform>
+<idx:iform value="{inflection_in}"></idx:iform>
+<idx:iform value="{inflection_the_plural}"></idx:iform>
+<idx:iform value="{inflection_from_plural}"></idx:iform>
+<idx:iform value="{inflection_to_plural}"></idx:iform>
+<idx:iform value="{inflection_in_plural}"></idx:iform>
 </idx:infl> 
 </idx:orth>
 <p>{meaning}</p>
@@ -179,7 +262,13 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 """.format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
            inflection_the=row['inflection_the'],
            inflection_from=row['inflection_from'],
-           inflection_to=row['inflection_to']))
+           inflection_to=row['inflection_to'],
+           inflection_in=row['inflection_in'],
+           inflection_the_plural=row['inflection_the_plural'],
+           inflection_from_plural=row['inflection_from_plural'],
+           inflection_to_plural=row['inflection_to_plural'],
+           inflection_in_plural=row['inflection_in_plural']
+           ))
         elif pospeech is False:
             fname.write(
                 """
@@ -195,7 +284,6 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 </idx:entry>
 <hr style="width:50%", size="3", color=black> 
 """.format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified']))
-
 
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):
