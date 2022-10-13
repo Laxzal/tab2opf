@@ -46,6 +46,19 @@ class SimpleCSV2HTML:
         self.verb_conj_present = self.verb_conj_present.pivot(index=['id'], columns=['verb_form', 'form', 'gender'])
         self.verb_conj_present.columns = ['_'.join(col) for col in self.verb_conj_present.columns.values]
         self.list_present_verb_columns = list(self.verb_conj_present.columns)
+
+        self.verb_conj_present_and_columns = [s + '_andform' for s in self.list_present_verb_columns]
+        self.verb_conj_present_and = self.verb_conj_present.copy()
+        self.verb_conj_present_and.columns = self.verb_conj_present_and_columns
+        self.verb_conj_present_and = self.verb_conj_present_and.applymap(lambda x: "{}{}".format('ו', x))
+        print(self.verb_conj_present_and.head())
+
+        self.verb_conj_present_that_columns = [s + '_thatform' for s in self.list_present_verb_columns]
+        self.verb_conj_present_that = self.verb_conj_present.copy()
+        self.verb_conj_present_that.columns = self.verb_conj_present_that_columns
+        self.verb_conj_present_that = self.verb_conj_present_that.applymap(lambda x: "{}{}".format('ש', x))
+        print(self.verb_conj_present_that.head())
+
         # TODO Find a better method
 
     def importVerbConjPast(self):
@@ -57,6 +70,18 @@ class SimpleCSV2HTML:
         data = [tuple(str(x) for x in tup) for tup in self.verb_conj_past.columns.values]
         self.verb_conj_past.columns = ['_'.join(col) for col in data]
         self.list_past_verb_columns = list(self.verb_conj_past.columns)
+
+        self.verb_conj_past_and_columns = [s + '_andform' for s in self.list_past_verb_columns]
+        self.verb_conj_past_and = self.verb_conj_past.copy()
+        self.verb_conj_past_and.columns = self.verb_conj_past_and_columns
+        self.verb_conj_past_and = self.verb_conj_past_and.applymap(lambda x: "{}{}".format('ו', x))
+        print(self.verb_conj_past_and.head())
+
+        self.verb_conj_past_that_columns = [s + '_thatform' for s in self.list_past_verb_columns]
+        self.verb_conj_past_that = self.verb_conj_past.copy()
+        self.verb_conj_past_that.columns = self.verb_conj_past_that_columns
+        self.verb_conj_past_that = self.verb_conj_past_that.applymap(lambda x: "{}{}".format('ש', x))
+        print(self.verb_conj_past_that.head())
 
     def _cleanNiqqudChars(self, my_string):
         return ''.join(['' if 1456 <= ord(c) <= 1479 else c for c in my_string])
@@ -71,16 +96,22 @@ class SimpleCSV2HTML:
 
     def hebrewVerbsPresClean(self):
         self.verb_conj_present = self.verb_conj_present.applymap(self._cleanNiqqudChars)
-
+        self.verb_conj_present_and = self.verb_conj_present_and.applymap(self._cleanNiqqudChars)
+        self.verb_conj_present_that = self.verb_conj_present_that.applymap(self._cleanNiqqudChars)
     def hebrewVerbsPastClean(self):
         self.verb_conj_past = self.verb_conj_past.applymap(self._cleanNiqqudChars)
+        self.verb_conj_past_and = self.verb_conj_past_and.applymap(self._cleanNiqqudChars)
+        self.verb_conj_past_that = self.verb_conj_past_that.applymap(self._cleanNiqqudChars)
 
     def mergeVerbPresent(self):
         self.database = self.database.merge(self.verb_conj_present, left_on=['id'], right_index=True, how='outer')
+        self.database = self.database.merge(self.verb_conj_present_and, left_on=['id'], right_index=True, how='outer')
+        self.database = self.database.merge(self.verb_conj_present_that, left_on=['id'], right_index=True, how='outer')
 
     def mergeVerbPast(self):
         self.database = self.database.merge(self.verb_conj_past, left_on=['id'], right_index=True, how='outer')
-
+        self.database = self.database.merge(self.verb_conj_past_and, left_on=['id'], right_index=True, how='outer')
+        self.database = self.database.merge(self.verb_conj_past_that, left_on=['id'], right_index=True, how='outer')
     def mergeNounPlurals(self):
         self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state']], on=['id'], how='outer')
 
@@ -109,6 +140,10 @@ class SimpleCSV2HTML:
         self.database['inflection_in'] = self.database[['word', 'part_of_speech_simplified']].apply(
             lambda x: str(in_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
             axis=1)
+        self.database['inflection_that'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(that_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else
+            np.nan,
+            axis=1)
 
         self.database['inflection_the_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
             lambda x: str(the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
@@ -129,14 +164,23 @@ class SimpleCSV2HTML:
             lambda x: str(in_value + str(x['plural_state'])) if (
                     x['part_of_speech_simplified'] == 'Noun' and pd.isnull(x['plural_state']) == False) else np.nan,
             axis=1)
+        self.database['inflection_that_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+            lambda x: str(that_value + the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
+                                                                               and pd.isnull(
+                        x['plural_state']) == False) else np.nan, axis=1)
+
         print(self.database['inflection_the'])
 
     def createSimpleDf(self):
         self.simplifiedDf_list = list(
             ['id', 'word', 'part_of_speech_simplified', 'meaning', 'inflection_the', 'inflection_to', 'inflection_from'
-                , 'inflection_in',
-             'plural_state', 'inflection_the_plural', 'inflection_to_plural', 'inflection_from_plural'
-                , 'inflection_in_plural']) + self.list_present_verb_columns + self.list_past_verb_columns
+                , 'inflection_in', 'inflection_that',
+                                   'plural_state', 'inflection_the_plural', 'inflection_to_plural',
+             'inflection_from_plural'
+                , 'inflection_in_plural', 'inflection_that_plural']) + self.list_present_verb_columns + \
+                                 self.list_past_verb_columns \
+                                 + self.verb_conj_past_and_columns + self.verb_conj_past_that_columns + \
+                                 self.verb_conj_present_and_columns + self.verb_conj_present_that_columns
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
@@ -209,6 +253,46 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 <idx:iform value="{hebrew_word_past_3_plural_masculine}"></idx:iform>
 <idx:iform value="{hebrew_word_past_3_plural_feminine}"></idx:iform>
 
+<idx:iform value="{hebrew_word_present_singular_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_present_singular_feminine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_present_plural_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_present_plural_feminine_andform}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_1_singular_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_singular_feminine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_plural_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_plural_feminine_andform}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_2_singular_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_singular_feminine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_plural_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_plural_feminine_andform}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_3_singular_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_singular_feminine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_plural_masculine_andform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_plural_feminine_andform}"></idx:iform>
+
+
+<idx:iform value="{hebrew_word_present_singular_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_present_singular_feminine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_present_plural_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_present_plural_feminine_thatform}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_1_singular_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_singular_feminine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_plural_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_1_plural_feminine_thatform}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_2_singular_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_singular_feminine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_plural_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_2_plural_feminine_thatform}"></idx:iform>
+
+<idx:iform value="{hebrew_word_past_3_singular_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_singular_feminine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_plural_masculine_thatform}"></idx:iform>
+<idx:iform value="{hebrew_word_past_3_plural_feminine_thatform}"></idx:iform>
 
   
 </idx:infl> 
@@ -222,6 +306,7 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
            hebrew_word_present_singular_feminine=row['hebrew_word_present_singular_feminine'],
            hebrew_word_present_plural_masculine=row['hebrew_word_present_plural_masculine'],
            hebrew_word_present_plural_feminine=row['hebrew_word_present_plural_feminine'],
+
            hebrew_word_past_1_singular_masculine=row['hebrew_word_past_1_singular_masculine'],
            hebrew_word_past_1_singular_feminine=row['hebrew_word_past_1_singular_feminine'],
            hebrew_word_past_1_plural_masculine=row['hebrew_word_past_1_plural_masculine'],
@@ -236,6 +321,47 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
            hebrew_word_past_3_singular_feminine=row['hebrew_word_past_3_singular_feminine'],
            hebrew_word_past_3_plural_masculine=row['hebrew_word_past_3_plural_masculine'],
            hebrew_word_past_3_plural_feminine=row['hebrew_word_past_3_plural_feminine'],
+
+           hebrew_word_present_singular_masculine_andform=row['hebrew_word_present_singular_masculine_andform'],
+           hebrew_word_present_singular_feminine_andform=row['hebrew_word_present_singular_feminine_andform'],
+           hebrew_word_present_plural_masculine_andform=row['hebrew_word_present_plural_masculine_andform'],
+           hebrew_word_present_plural_feminine_andform=row['hebrew_word_present_plural_feminine_andform'],
+
+           hebrew_word_past_1_singular_masculine_andform=row['hebrew_word_past_1_singular_masculine_andform'],
+           hebrew_word_past_1_singular_feminine_andform=row['hebrew_word_past_1_singular_feminine_andform'],
+           hebrew_word_past_1_plural_masculine_andform=row['hebrew_word_past_1_plural_masculine_andform'],
+           hebrew_word_past_1_plural_feminine_andform=row['hebrew_word_past_1_plural_feminine_andform'],
+
+           hebrew_word_past_2_singular_masculine_andform=row['hebrew_word_past_2_singular_masculine_andform'],
+           hebrew_word_past_2_singular_feminine_andform=row['hebrew_word_past_2_singular_feminine_andform'],
+           hebrew_word_past_2_plural_masculine_andform=row['hebrew_word_past_2_plural_masculine_andform'],
+           hebrew_word_past_2_plural_feminine_andform=row['hebrew_word_past_2_plural_feminine_andform'],
+
+           hebrew_word_past_3_singular_masculine_andform=row['hebrew_word_past_3_singular_masculine_andform'],
+           hebrew_word_past_3_singular_feminine_andform=row['hebrew_word_past_3_singular_feminine_andform'],
+           hebrew_word_past_3_plural_masculine_andform=row['hebrew_word_past_3_plural_masculine_andform'],
+           hebrew_word_past_3_plural_feminine_andform=row['hebrew_word_past_3_plural_feminine_andform'],
+
+           hebrew_word_present_singular_masculine_thatform=row['hebrew_word_present_singular_masculine_thatform'],
+           hebrew_word_present_singular_feminine_thatform=row['hebrew_word_present_singular_feminine_thatform'],
+           hebrew_word_present_plural_masculine_thatform=row['hebrew_word_present_plural_masculine_thatform'],
+           hebrew_word_present_plural_feminine_thatform=row['hebrew_word_present_plural_feminine_thatform'],
+
+           hebrew_word_past_1_singular_masculine_thatform=row['hebrew_word_past_1_singular_masculine_thatform'],
+           hebrew_word_past_1_singular_feminine_thatform=row['hebrew_word_past_1_singular_feminine_thatform'],
+           hebrew_word_past_1_plural_masculine_thatform=row['hebrew_word_past_1_plural_masculine_thatform'],
+           hebrew_word_past_1_plural_feminine_thatform=row['hebrew_word_past_1_plural_feminine_thatform'],
+
+           hebrew_word_past_2_singular_masculine_thatform=row['hebrew_word_past_2_singular_masculine_thatform'],
+           hebrew_word_past_2_singular_feminine_thatform=row['hebrew_word_past_2_singular_feminine_thatform'],
+           hebrew_word_past_2_plural_masculine_thatform=row['hebrew_word_past_2_plural_masculine_thatform'],
+           hebrew_word_past_2_plural_feminine_thatform=row['hebrew_word_past_2_plural_feminine_thatform'],
+
+           hebrew_word_past_3_singular_masculine_thatform=row['hebrew_word_past_3_singular_masculine_thatform'],
+           hebrew_word_past_3_singular_feminine_thatform=row['hebrew_word_past_3_singular_feminine_thatform'],
+           hebrew_word_past_3_plural_masculine_thatform=row['hebrew_word_past_3_plural_masculine_thatform'],
+           hebrew_word_past_3_plural_feminine_thatform=row['hebrew_word_past_3_plural_feminine_thatform']
+
            )
             )
         elif pospeech is True:
@@ -249,10 +375,12 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 <idx:iform value="{inflection_from}"></idx:iform>
 <idx:iform value="{inflection_to}"></idx:iform>
 <idx:iform value="{inflection_in}"></idx:iform>
+<idx:iform value="{inflection_that}"></idx:iform>
 <idx:iform value="{inflection_the_plural}"></idx:iform>
 <idx:iform value="{inflection_from_plural}"></idx:iform>
 <idx:iform value="{inflection_to_plural}"></idx:iform>
 <idx:iform value="{inflection_in_plural}"></idx:iform>
+<idx:iform value="{inflection_that_plural}"></idx:iform>
 </idx:infl> 
 </idx:orth>
 <p>{meaning}</p>
@@ -264,10 +392,12 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
            inflection_from=row['inflection_from'],
            inflection_to=row['inflection_to'],
            inflection_in=row['inflection_in'],
+           inflection_that=row['inflection_that'],
            inflection_the_plural=row['inflection_the_plural'],
            inflection_from_plural=row['inflection_from_plural'],
            inflection_to_plural=row['inflection_to_plural'],
-           inflection_in_plural=row['inflection_in_plural']
+           inflection_in_plural=row['inflection_in_plural'],
+           inflection_that_plural=row['inflection_that_plural']
            ))
         elif pospeech is False:
             fname.write(
