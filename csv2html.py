@@ -70,7 +70,7 @@ class SimpleCSV2HTML:
 
     def createSimpleDf(self):
         self.csv2html_df = self.database[
-            ['id', 'word', 'part_of_speech_simplified', 'meaning', 'inflection_the', 'plural_state']].copy()
+            ['id', 'word', 'part_of_speech_simplified', 'meaning', 'inflection_the','inflection_to', 'inflection_from', 'plural_state']].copy()
         print(self.csv2html_df.head())
 
     @contextlib.contextmanager
@@ -149,7 +149,7 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 """.format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
            inflection_the=row['inflection_the'],
            inflection_from=row['inflection_from'],
-           inflection_to=row['inlection_to']))
+           inflection_to=row['inflection_to']))
 
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):
