@@ -24,6 +24,8 @@ https://gist.github.com/carlopires/1262033 --ISO Codes for langauges to implemen
 import os
 from contextlib import contextmanager
 
+from csv2html import SimpleCSV2HTML
+
 
 class CreateOPF:
 
@@ -31,6 +33,23 @@ class CreateOPF:
         self.title = title
         self.input_lang = input_lang
         self.output_lang = output_lang
+        self.csv2html = SimpleCSV2HTML(
+            "/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents/hebrew_dict/pealim_database.csv")
+        self.htmlfiles = []
+
+    def runCSV2HTML(self):
+        self.csv2html.importNounPluralDb()
+        self.csv2html.hebrewPluralClean()
+
+        self.csv2html.hebrewWordsClean('word')
+
+        self.csv2html.mergeNounPlurals()
+
+        self.csv2html.extractForm()
+        self.csv2html.createDefInflection()
+        self.csv2html.createSimpleDf()
+        self.csv2html.writeHTML('hebrew_to_english', 1000)
+        self.htmlfiles = self.csv2html.list_file_names
 
     @contextmanager
     def openOPF(self):
@@ -61,21 +80,34 @@ class CreateOPF:
 
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
-""".format(name=self.title, source=self.input_lang, target=self.output_lang))
+            """.format(name=self.title, source=self.input_lang, target=self.output_lang))
+
+            for z in range(len(self.htmlfiles)):
+                f.write("""
+                <item id="dictionary{id}" href="{html_file}" media-type="text/x-oeb1-document"/>
+                """.format(id=z, html_file=str(self.htmlfiles[z])))
+
+            f.write("""</manifest>
+            
+            <spine>""")
+            for y in range(len(self.htmlfiles)):
+                f.write("""
+                    <itemref idref="dictionary{y}"/>
+                """.format(y=str(y)))
 
             f.write("""
+</spine>            
 <tours/>
 <guide> <reference type="search" title="Dictionary Search" onclick= "index_search()"/> </guide>
 </package>
 """
                     )
 
-
-
         assert f.closed is True
 
 
-test = CreateOPF(title='Test_Dict')
+test = CreateOPF(title='hebrew_to_english_dict')
+test.runCSV2HTML()
 test.openOPF()
 
 print('end')

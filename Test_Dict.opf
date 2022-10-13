@@ -21,7 +21,4 @@
 
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
-
-<tours/>
-<guide> <reference type="search" title="Dictionary Search" onclick= "index_search()"/> </guide>
-</package>
+            
