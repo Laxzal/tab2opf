@@ -19,13 +19,10 @@ class SimpleCSV2HTML:
 
         self.database_fname = database_fname
         self.database = None
-        self.csv_noun_plural = r"/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents/hebrew_dict" \
-                               r"/pealim_noun_db.csv"
+        self.csv_noun_plural = r"C:\Users\Calvin\PycharmProjects\hebrew_dictionary_git\hebrew_dictionary\pealim_noun_db.csv"
         self.list_file_names = []
-        self.verb_conj_present_file = "/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents" \
-                                      "/hebrew_dict/pealim_verb_present_table_db.csv"
-        self.verb_conj_past_file = "/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents/hebrew_dict" \
-                                   "/pealim_verb_past_table_db.csv"
+        self.verb_conj_present_file = r"C:\Users\Calvin\PycharmProjects\hebrew_dictionary_git\hebrew_dictionary\pealim_verb_present_table_db.csv"
+        self.verb_conj_past_file = r"C:\Users\Calvin\PycharmProjects\hebrew_dictionary_git\hebrew_dictionary\pealim_verb_past_table_db.csv"
         self.verb_conj_present = None
         # Automatic Functions to Run
         self.importDbFile()
@@ -95,13 +92,13 @@ class SimpleCSV2HTML:
             lambda x: self._cleanNiqqudChars(x) if not pd.isnull(x) else x)
 
     def hebrewVerbsPresClean(self):
-        self.verb_conj_present = self.verb_conj_present.applymap(self._cleanNiqqudChars)
-        self.verb_conj_present_and = self.verb_conj_present_and.applymap(self._cleanNiqqudChars)
-        self.verb_conj_present_that = self.verb_conj_present_that.applymap(self._cleanNiqqudChars)
+        self.verb_conj_present = self.verb_conj_present.applymap(lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+        self.verb_conj_present_and = self.verb_conj_present_and.applymap(lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+        self.verb_conj_present_that = self.verb_conj_present_that.applymap(lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
     def hebrewVerbsPastClean(self):
-        self.verb_conj_past = self.verb_conj_past.applymap(self._cleanNiqqudChars)
-        self.verb_conj_past_and = self.verb_conj_past_and.applymap(self._cleanNiqqudChars)
-        self.verb_conj_past_that = self.verb_conj_past_that.applymap(self._cleanNiqqudChars)
+        self.verb_conj_past = self.verb_conj_past.applymap(lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+        self.verb_conj_past_and = self.verb_conj_past_and.applymap(lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+        self.verb_conj_past_that = self.verb_conj_past_that.applymap(lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
 
     def mergeVerbPresent(self):
         self.database = self.database.merge(self.verb_conj_present, left_on=['id'], right_index=True, how='outer')
@@ -173,7 +170,7 @@ class SimpleCSV2HTML:
 
     def createSimpleDf(self):
         self.simplifiedDf_list = list(
-            ['id', 'word', 'part_of_speech_simplified', 'meaning', 'inflection_the', 'inflection_to', 'inflection_from'
+            ['id', 'word','hebrew_pronunciation', 'part_of_speech_simplified', 'meaning', 'inflection_the', 'inflection_to', 'inflection_from'
                 , 'inflection_in', 'inflection_that',
                                    'plural_state', 'inflection_the_plural', 'inflection_to_plural',
              'inflection_from_plural'
@@ -231,7 +228,7 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
                 """
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{id}"></a>
-<idx:orth value="{word}"><b>{word}</b>
+<idx:orth value="{word}"><p><b>{word}</b>&nbsp;<hr class="vertical" />&nbsp;<i>{pronunciation}</i></p>
 <idx:infl inflgrp="{inflgrp}">
 <idx:iform value="{hebrew_word_present_singular_masculine}"></idx:iform>
 <idx:iform value="{hebrew_word_present_singular_feminine}"></idx:iform>
@@ -302,6 +299,8 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 </idx:entry>
 <hr style="width:50%", size="3", color=black> 
 """.format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
+           pronunciation=row['hebrew_pronunciation'],
+
            hebrew_word_present_singular_masculine=row['hebrew_word_present_singular_masculine'],
            hebrew_word_present_singular_feminine=row['hebrew_word_present_singular_feminine'],
            hebrew_word_present_plural_masculine=row['hebrew_word_present_plural_masculine'],
@@ -369,7 +368,7 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
                 """
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{id}"></a>
-<idx:orth value="{word}"><b>{word}</b>
+<idx:orth value="{word}"><p><b>{word}</b>&nbsp;<hr class="vertical" />&nbsp;<i>{pronunciation}</i></p>
 <idx:infl inflgrp="{inflgrp}"> 
 <idx:iform value="{inflection_the}"></idx:iform>
 <idx:iform value="{inflection_from}"></idx:iform>
@@ -388,6 +387,8 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 </idx:entry>
 <hr style="width:50%", size="3", color=black> 
 """.format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
+           pronunciation=row['hebrew_pronunciation'],
+
            inflection_the=row['inflection_the'],
            inflection_from=row['inflection_from'],
            inflection_to=row['inflection_to'],
@@ -427,7 +428,7 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
         for i in range(noHTMLfiles):
             fname = f'{title_name}_{i}.html'
             self.list_file_names.append(fname)
-            with open(fname, 'w') as f:
+            with open(fname, 'w',  encoding="utf-8") as f:
                 f.write("""
             <html xmlns:math="http://exslt.org/math" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tl="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf"
 

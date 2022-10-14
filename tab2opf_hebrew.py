@@ -34,7 +34,7 @@ class CreateOPF:
         self.input_lang = input_lang
         self.output_lang = output_lang
         self.csv2html = SimpleCSV2HTML(
-            "/Users/calvin/Library/CloudStorage/OneDrive-Personal/Documents/hebrew_dict/pealim_database.csv")
+            r"C:\Users\Calvin\PycharmProjects\hebrew_dictionary_git\hebrew_dictionary\pealim_database.csv")
         self.htmlfiles = []
 
     def runCSV2HTML(self):
