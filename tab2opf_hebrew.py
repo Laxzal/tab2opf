@@ -33,8 +33,7 @@ class CreateOPF:
         self.title = title
         self.input_lang = input_lang
         self.output_lang = output_lang
-        self.csv2html = SimpleCSV2HTML(
-            r"C:\Users\Calvin\PycharmProjects\hebrew_dictionary_git\hebrew_dictionary\pealim_database.csv")
+        self.csv2html = SimpleCSV2HTML("/Users/calvin/Documents/hebrew_dictionary/pealim_database.csv")
         self.htmlfiles = []
 
     def runCSV2HTML(self):
@@ -52,6 +51,8 @@ class CreateOPF:
 
         self.csv2html.extractForm()
         self.csv2html.createDefInflection()
+        self.csv2html.verbs_dictionary()
+
         self.csv2html.createSimpleDf()
         self.csv2html.writeHTML('hebrew_to_english', 1000)
         self.htmlfiles = self.csv2html.list_file_names
