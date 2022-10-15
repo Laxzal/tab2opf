@@ -130,7 +130,7 @@ class SimpleCSV2HTML:
 
     def _createChaserDict(self, sel_dict: dict, key, value):
         # Creating a function that creates a dictionary key and then adding in all the chasers relevant to that dict key
-        sel_dict.setdefault(key, []).append('<idx:iform value="' + str(value) + '"></idx:iform>')
+        sel_dict.setdefault(key, []).append('<idx:iform value="' + str(value) + '" exact="yes" />')
 
     def extractForm(self):
         self.database['part_of_speech_simplified'] = self.database['part_of_speech'].apply(
@@ -282,8 +282,7 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
                 try:
                     for inflection in self.allverbs[str(key)][row['id']]:
                         fname.write(
-"""
-{inflection}
+"""{inflection}
 """.format(inflection=inflection))
                 except KeyError:
                     continue
