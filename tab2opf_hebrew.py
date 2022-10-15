@@ -39,6 +39,7 @@ class CreateOPF:
     def runCSV2HTML(self):
         self.csv2html.importNounPluralDb()
         self.csv2html.hebrewPluralClean()
+        self.csv2html.importVerbConjPresent_ver2()
         self.csv2html.importVerbConjPresent()
         self.csv2html.importVerbConjPast()
         self.csv2html.importVerbConjFut()

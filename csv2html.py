@@ -47,6 +47,11 @@ class SimpleCSV2HTML:
         # self.noun_plural_db = self.noun_plural_db.where(pd.notnull(self.noun_plural_db), "NaN")
         # TODO add inflections onto nouns
 
+    def importVerbConjPresent_ver2(self):
+        self.verb_conj_present_ = pd.read_csv(self.verb_conj_present_file)
+        self.verb_conj_present_ = self.verb_conj_present_.merge(self.database, left_on='id', right_on='id')
+
+        self.verb_conj_present_filtered = self.verb_conj_present_[['id', 'hebrew_word', 'english_word', 'chaser', 'word', 'hebrew_pronunciation', 'part_of_speech', 'meaning']]
     def importVerbConjPresent(self):
         self.verb_conj_present = pd.read_csv(self.verb_conj_present_file)
         print(self.verb_conj_present.head())
