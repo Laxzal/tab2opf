@@ -17,6 +17,9 @@ class SimpleCSV2HTML:
 
     def __init__(self, database_fname):
 
+        self.verb_conj_future_that_chaser = {}
+        self.verb_conj_future_and_chaser = {}
+        self.verb_conj_future_chaser = {}
         self.verb_conj_past_that_chaser = {}
         self.verb_conj_past_and_chaser = {}
         self.verb_conj_past_chaser = {}
@@ -30,6 +33,8 @@ class SimpleCSV2HTML:
         self.verb_conj_past_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_past_table_db.csv"
         self.verb_conj_present = None
         self.verb_conj_present_chaser = {}
+        self.verb_conj_future_file = r"/Users/calvin/Documents" \
+                                     r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
         # Automatic Functions to Run
         self.importDbFile()
 
@@ -86,6 +91,29 @@ class SimpleCSV2HTML:
         self.verb_conj_past_that = self.verb_conj_past_that.applymap(lambda x: "{}{}".format('ש', x) if pd.isnull(x) == False else x)
         print(self.verb_conj_past_that.head())
 
+    def importVerbConjFut(self):
+        self.verb_conj_future = pd.read_csv(self.verb_conj_future_file)
+        self.verb_conj_future.drop(columns=['english_word'], inplace=True)
+
+        self.verb_conj_future = self.verb_conj_future.pivot(index=['id'], columns=['verb_form', 'person', 'form', 'gender'])
+        data = [tuple(str(x) for x in tup) for tup in self.verb_conj_future.columns.values]
+        self.verb_conj_future.columns = ['_'.join(col) for col in data]
+        self.list_verb_future_columns = list(self.verb_conj_future.columns)
+
+        self.verb_conj_future_and_columns = [s + '_andform' for s in self.list_verb_future_columns]
+        self.verb_conj_future_and = self.verb_conj_future.copy()
+        self.verb_conj_future_and.columns = self.verb_conj_future_and_columns
+        self.verb_conj_future_and = self.verb_conj_future_and.applymap(lambda x: "{}{}".format('ו', x) if pd.isnull(x) == False else x)
+        print(self.verb_conj_future_and.head())
+
+        self.verb_conj_future_that_columns = [s + '_thatform' for s in self.list_verb_future_columns]
+        self.verb_conj_future_that = self.verb_conj_future.copy()
+        self.verb_conj_future_that.columns = self.verb_conj_future_that_columns
+        self.verb_conj_future_that = self.verb_conj_future_that.applymap(lambda x: "{}{}".format('ש', x) if pd.isnull(x) == False else x)
+        print(self.verb_conj_future_that.head())
+
+
+
     def _cleanNiqqudChars(self, my_string):
         return ''.join(['' if 1456 <= ord(c) <= 1479 else c for c in my_string])
 
@@ -113,6 +141,14 @@ class SimpleCSV2HTML:
         self.verb_conj_past_that = self.verb_conj_past_that.applymap(
             lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
 
+    def hebrewVerbsFutureClean(self):
+        self.verb_conj_future = self.verb_conj_future.applymap(
+            lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+        self.verb_conj_future_and = self.verb_conj_future_and.applymap(
+            lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+        self.verb_conj_future_that = self.verb_conj_future_that.applymap(
+            lambda x: self._cleanNiqqudChars(x) if (pd.isnull(x)) == False else x)
+
     def mergeVerbPresent(self):
         self.database = self.database.merge(self.verb_conj_present, left_on=['id'], right_index=True, how='outer')
         self.database = self.database.merge(self.verb_conj_present_and, left_on=['id'], right_index=True, how='outer')
@@ -122,6 +158,10 @@ class SimpleCSV2HTML:
         self.database = self.database.merge(self.verb_conj_past, left_on=['id'], right_index=True, how='outer')
         self.database = self.database.merge(self.verb_conj_past_and, left_on=['id'], right_index=True, how='outer')
         self.database = self.database.merge(self.verb_conj_past_that, left_on=['id'], right_index=True, how='outer')
+    def mergeVerbFuture(self):
+        self.database = self.database.merge(self.verb_conj_future, left_on=['id'], right_index=True, how='outer')
+        self.database = self.database.merge(self.verb_conj_future_and, left_on=['id'], right_index=True, how='outer')
+        self.database = self.database.merge(self.verb_conj_future_that, left_on=['id'], right_index=True, how='outer')
 
     def mergeNounPlurals(self):
         self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state']], on=['id'], how='outer')
@@ -203,9 +243,16 @@ class SimpleCSV2HTML:
         self.dictVerbCreat(self.verb_conj_past,self.verb_conj_past_chaser)
         self.dictVerbCreat(self.verb_conj_past_and, self.verb_conj_past_and_chaser)
         self.dictVerbCreat(self.verb_conj_past_that, self.verb_conj_past_that_chaser)
+
+        self.dictVerbCreat(self.verb_conj_future, self.verb_conj_future_chaser)
+        self.dictVerbCreat(self.verb_conj_future_and, self.verb_conj_future_and_chaser)
+        self.dictVerbCreat(self.verb_conj_future_that, self.verb_conj_future_that_chaser)
+
         list_dict = [self.verb_conj_present_chaser, self.verb_conj_present_and_chaser,
                      self.verb_conj_present_that_chaser, self.verb_conj_past_chaser,
-                     self.verb_conj_past_and_chaser, self.verb_conj_past_that_chaser]
+                     self.verb_conj_past_and_chaser, self.verb_conj_past_that_chaser,
+                     self.verb_conj_future_chaser, self.verb_conj_future_and_chaser,
+                     self.verb_conj_present_that_chaser]
         self.allverbs = {}
 
         for i in range(len(list_dict)):
@@ -224,7 +271,9 @@ class SimpleCSV2HTML:
                 , 'inflection_in_plural', 'inflection_that_plural']) + self.list_present_verb_columns + \
                                  self.list_past_verb_columns \
                                  + self.verb_conj_past_and_columns + self.verb_conj_past_that_columns + \
-                                 self.verb_conj_present_and_columns + self.verb_conj_present_that_columns
+                                 self.verb_conj_present_and_columns + self.verb_conj_present_that_columns + \
+                                self.verb_conj_present_that_columns + self.verb_conj_future_and_columns + \
+                                 self.list_verb_future_columns
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
