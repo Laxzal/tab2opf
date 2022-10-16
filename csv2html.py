@@ -17,24 +17,29 @@ class SimpleCSV2HTML:
 
     def __init__(self, database_fname):
 
-        self.verb_conj_future_that_chaser = {}
-        self.verb_conj_future_and_chaser = {}
-        self.verb_conj_future_chaser = {}
-        self.verb_conj_past_that_chaser = {}
-        self.verb_conj_past_and_chaser = {}
-        self.verb_conj_past_chaser = {}
-        self.verb_conj_present_that_chaser = {}
-        self.verb_conj_present_and_chaser = {}
         self.database_fname = database_fname
         self.database = None
         self.csv_noun_plural = r"/Users/calvin/Documents/hebrew_dictionary/pealim_noun_db.csv"
         self.list_file_names = []
         self.verb_conj_present_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_present_table_db.csv"
         self.verb_conj_past_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_past_table_db.csv"
-        self.verb_conj_present = None
-        self.verb_conj_present_chaser = {}
         self.verb_conj_future_file = r"/Users/calvin/Documents" \
                                      r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
+
+        self.noun_inflection_group = ['plural_state','infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
+                                      'infl_from_plural', 'infl_to_plural', 'infl_in_plural', 'infl_that_plural']
+        self.verb_inflection_group = ['chaser', 'infl_when_cond', 'infl_that', 'infl_and', 'infl_when_cond_chaser',
+                                      'infl_that_chaser', 'infl_and_chaser']
+        self.from_value = str('מ')
+        self.the_value = str('ה')
+        self.to_value = str('ל')
+        self.in_value = str('ב')
+        self.that_value = str('ש')
+        self.as_value = str('כ')
+        self.and_value = str('ו')
+        self.verb_conj_present_filtered = None
+        self.verb_conj_past_filtered = None
+        self.verb_conj_future_filtered = None
         # Automatic Functions to Run
         self.importDbFile()
 
@@ -47,72 +52,69 @@ class SimpleCSV2HTML:
         # self.noun_plural_db = self.noun_plural_db.where(pd.notnull(self.noun_plural_db), "NaN")
         # TODO add inflections onto nouns
 
-    def importVerbConjPresent(self):
-        self.verb_conj_present = pd.read_csv(self.verb_conj_present_file)
-        print(self.verb_conj_present.head())
-        self.verb_conj_present.drop(columns=['person', 'english_word'], inplace=True)
-        self.verb_conj_present = self.verb_conj_present.pivot(index=['id'], columns=['verb_form', 'form', 'gender'])
-        self.verb_conj_present.columns = ['_'.join(col) for col in self.verb_conj_present.columns.values]
-        self.list_present_verb_columns = list(self.verb_conj_present.columns)
+    def importVerbConjPresent_ver2(self):
+        self.verb_conj_present_ = pd.read_csv(self.verb_conj_present_file)
+        self.verb_conj_present_ = self.verb_conj_present_.merge(self.database, left_on='id', right_on='id')
+        self.verb_conj_present_filtered = self.verb_conj_present_[['id', 'hebrew_word', 'english_word', 'chaser',
+                                                                   'word', 'hebrew_pronunciation',
+                                                                   'part_of_speech_simplified', 'meaning', 'gender',
+                                                                   'pattern']]
+        self.verb_conj_present_filtered['niqqud'] = self.verb_conj_present_filtered['hebrew_word'].copy()
+        self.verb_conj_present_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
 
-        self.verb_conj_present_and_columns = [s + '_andform' for s in self.list_present_verb_columns]
-        self.verb_conj_present_and = self.verb_conj_present.copy()
-        self.verb_conj_present_and.columns = self.verb_conj_present_and_columns
-        self.verb_conj_present_and = self.verb_conj_present_and.applymap(lambda x: "{}{}".format('ו', x) if pd.isnull(x) == False else x)
-        print(self.verb_conj_present_and.head())
+    def importVerbConjPast_ver2(self):
+        self.verb_conj_past_ = pd.read_csv(self.verb_conj_past_file)
+        self.verb_conj_past_ = self.verb_conj_past_.merge(self.database, left_on='id', right_on='id')
+        self.verb_conj_past_filtered = self.verb_conj_past_[['id', 'hebrew_word', 'english_word', 'chaser', 'word',
+                                                             'hebrew_pronunciation', 'part_of_speech_simplified',
+                                                             'meaning',
+                                                             'gender', 'pattern']]
+        self.verb_conj_past_filtered['niqqud'] = self.verb_conj_past_filtered['hebrew_word'].copy()
+        self.verb_conj_past_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
 
-        self.verb_conj_present_that_columns = [s + '_thatform' for s in self.list_present_verb_columns]
-        self.verb_conj_present_that = self.verb_conj_present.copy()
-        self.verb_conj_present_that.columns = self.verb_conj_present_that_columns
-        self.verb_conj_present_that = self.verb_conj_present_that.applymap(lambda x: "{}{}".format('ש', x) if pd.isnull(x) == False else x)
-        print(self.verb_conj_present_that.head())
+    def importVerbConjFut_ver(self):
+        self.verb_conj_future_ = pd.read_csv(self.verb_conj_future_file)
+        self.verb_conj_future_ = self.verb_conj_future_.merge(self.database, left_on='id', right_on='id')
+        self.verb_conj_future_filtered = self.verb_conj_future_[
+            ['id', 'hebrew_word', 'english_word', 'chaser', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified',
+             'meaning',
+             'gender', 'pattern']]
+        self.verb_conj_future_filtered['niqqud'] = self.verb_conj_future_filtered['hebrew_word'].copy()
+        self.verb_conj_future_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
 
-        # TODO Find a better method
+    def cleanVerbWord(self):
+        self.verb_conj_present_filtered['hebrew_word'] = self.verb_conj_present_filtered['hebrew_word'].apply(
+            self._cleanNiqqudChars)
+        self.verb_conj_past_filtered['hebrew_word'] = self.verb_conj_past_['hebrew_word'].apply(
+            self._cleanNiqqudChars)
+        self.verb_conj_future_filtered['hebrew_word'] = self.verb_conj_future_filtered['hebrew_word'].apply(
+            self._cleanNiqqudChars)
 
-    def importVerbConjPast(self):
-        self.verb_conj_past = pd.read_csv(self.verb_conj_past_file)
-        print(self.verb_conj_past.head())
-        self.verb_conj_past.drop(columns=['english_word'], inplace=True)
+    def _inflectionVerbs(self, dataframe):
 
-        self.verb_conj_past = self.verb_conj_past.pivot(index=['id'], columns=['verb_form', 'person', 'form', 'gender'])
-        data = [tuple(str(x) for x in tup) for tup in self.verb_conj_past.columns.values]
-        self.verb_conj_past.columns = ['_'.join(col) for col in data]
-        self.list_past_verb_columns = list(self.verb_conj_past.columns)
+        dataframe['infl_and'] = dataframe['hebrew_word'].apply(lambda x: "{}{}".format(self.and_value,
+                                                                                       x))
+        dataframe['infl_that'] = dataframe['hebrew_word'].apply(lambda x: "{}{}".format(self.that_value,
+                                                                                        x))
+        dataframe['infl_when_cond'] = dataframe['hebrew_word'].apply(lambda x: "{}{}{}".format(self.as_value,
+                                                                                               self.that_value,
+                                                                                               x))
+        dataframe['infl_and_chaser'] = dataframe['chaser'].apply(lambda x: "{}{}".format(self.and_value,
+                                                                                         x) if pd.isnull(
+            x) == False else np.nan)
+        dataframe['infl_that_chaser'] = dataframe['chaser'].apply(lambda x: "{}{}".format(self.that_value,
+                                                                                          x) if pd.isnull(
+            x) == False else np.nan)
+        dataframe['infl_when_cond_chaser'] = dataframe['chaser'].apply(lambda x: "{}{}{}".format(self.as_value,
+                                                                                                 self.that_value,
+                                                                                                 x) if pd.isnull(
+            x) == False else np.nan)
 
-        self.verb_conj_past_and_columns = [s + '_andform' for s in self.list_past_verb_columns]
-        self.verb_conj_past_and = self.verb_conj_past.copy()
-        self.verb_conj_past_and.columns = self.verb_conj_past_and_columns
-        self.verb_conj_past_and = self.verb_conj_past_and.applymap(lambda x: "{}{}".format('ו', x) if pd.isnull(x) == False else x)
-        print(self.verb_conj_past_and.head())
-
-        self.verb_conj_past_that_columns = [s + '_thatform' for s in self.list_past_verb_columns]
-        self.verb_conj_past_that = self.verb_conj_past.copy()
-        self.verb_conj_past_that.columns = self.verb_conj_past_that_columns
-        self.verb_conj_past_that = self.verb_conj_past_that.applymap(lambda x: "{}{}".format('ש', x) if pd.isnull(x) == False else x)
-        print(self.verb_conj_past_that.head())
-
-    def importVerbConjFut(self):
-        self.verb_conj_future = pd.read_csv(self.verb_conj_future_file)
-        self.verb_conj_future.drop(columns=['english_word'], inplace=True)
-
-        self.verb_conj_future = self.verb_conj_future.pivot(index=['id'], columns=['verb_form', 'person', 'form', 'gender'])
-        data = [tuple(str(x) for x in tup) for tup in self.verb_conj_future.columns.values]
-        self.verb_conj_future.columns = ['_'.join(col) for col in data]
-        self.list_verb_future_columns = list(self.verb_conj_future.columns)
-
-        self.verb_conj_future_and_columns = [s + '_andform' for s in self.list_verb_future_columns]
-        self.verb_conj_future_and = self.verb_conj_future.copy()
-        self.verb_conj_future_and.columns = self.verb_conj_future_and_columns
-        self.verb_conj_future_and = self.verb_conj_future_and.applymap(lambda x: "{}{}".format('ו', x) if pd.isnull(x) == False else x)
-        print(self.verb_conj_future_and.head())
-
-        self.verb_conj_future_that_columns = [s + '_thatform' for s in self.list_verb_future_columns]
-        self.verb_conj_future_that = self.verb_conj_future.copy()
-        self.verb_conj_future_that.columns = self.verb_conj_future_that_columns
-        self.verb_conj_future_that = self.verb_conj_future_that.applymap(lambda x: "{}{}".format('ש', x) if pd.isnull(x) == False else x)
-        print(self.verb_conj_future_that.head())
-
-
+    def inflectVerbs(self):
+        self.list_of_verb_databases = [self.verb_conj_present_filtered, self.verb_conj_past_filtered,
+                                       self.verb_conj_future_filtered]
+        for verb_file in self.list_of_verb_databases:
+            self._inflectionVerbs(verb_file)
 
     def _cleanNiqqudChars(self, my_string):
         return ''.join(['' if 1456 <= ord(c) <= 1479 else c for c in my_string])
@@ -158,6 +160,7 @@ class SimpleCSV2HTML:
         self.database = self.database.merge(self.verb_conj_past, left_on=['id'], right_index=True, how='outer')
         self.database = self.database.merge(self.verb_conj_past_and, left_on=['id'], right_index=True, how='outer')
         self.database = self.database.merge(self.verb_conj_past_that, left_on=['id'], right_index=True, how='outer')
+
     def mergeVerbFuture(self):
         self.database = self.database.merge(self.verb_conj_future, left_on=['id'], right_index=True, how='outer')
         self.database = self.database.merge(self.verb_conj_future_and, left_on=['id'], right_index=True, how='outer')
@@ -172,9 +175,18 @@ class SimpleCSV2HTML:
         # Creating a function that creates a dictionary key and then adding in all the chasers relevant to that dict key
         sel_dict.setdefault(key, []).append('<idx:iform value="' + str(value) + '" />')
 
+    def extractPattern(self):
+        regex = r"(?<=\s)[^\W\d_]+(?:['.][^\W\d_]+)*(?![^\W\d_])"
+        self.database['pattern'] = self.database['part_of_speech'].apply(
+            lambda x: re.search(regex, x)[0] if
+            re.search(regex, x) is not None else np.nan
+        )
+        self.database['pattern'].mask(
+            (self.database['pattern'] == 'feminine') | (self.database['pattern'] == 'masculine'), np.nan, inplace=True)
+
     def extractForm(self):
         self.database['part_of_speech_simplified'] = self.database['part_of_speech'].apply(
-            lambda x: re.match(r"(\w+)", x)[0] if re.match(r"(\w+)", x) is not None else '-')
+            lambda x: re.match(r"(\w+)", x)[0] if re.match(r"(\w+)", x) is not None else np.nan)
 
     def createDefInflection(self):
         from_value = str('מ')
@@ -182,98 +194,58 @@ class SimpleCSV2HTML:
         to_value = str('ל')
         in_value = str('ב')
         that_value = str('ש')
-        self.database['inflection_the'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
+        self.database['infl_the'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(the_value + str(x['word'])) if x['part_of_speech_simplified'] != 'Verb' else np.nan,
             axis=1)
-        self.database['inflection_from'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(from_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else
+        self.database['infl_from'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(from_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] != 'Verb' else
             np.nan,
             axis=1)
-        self.database['inflection_to'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(to_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
+        self.database['infl_to'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(to_value + str(x['word'])) if x['part_of_speech_simplified'] != 'Verb' else np.nan,
             axis=1)
-        self.database['inflection_in'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(in_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else np.nan,
+        self.database['infl_in'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(in_value + str(x['word'])) if x['part_of_speech_simplified'] != 'Verb' else np.nan,
             axis=1)
-        self.database['inflection_that'] = self.database[['word', 'part_of_speech_simplified']].apply(
-            lambda x: str(that_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] == 'Noun' else
+        self.database['infl_that'] = self.database[['word', 'part_of_speech_simplified']].apply(
+            lambda x: str(that_value + the_value + str(x['word'])) if x['part_of_speech_simplified'] != 'Verb' else
             np.nan,
             axis=1)
 
-        self.database['inflection_the_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+        self.database['infl_the_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
             lambda x: str(the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
                                                                   and pd.isnull(
                         x['plural_state']) == False) else np.nan,
             axis=1)
-        self.database['inflection_from_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+        self.database['infl_from_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
             lambda x: str(from_value + the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
                                                                                and pd.isnull(
                         x['plural_state']) == False)
             else np.nan,
             axis=1)
-        self.database['inflection_to_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+        self.database['infl_to_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
             lambda x: str(to_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
                                                                  and pd.isnull(x['plural_state']) == False) else np.nan,
             axis=1)
-        self.database['inflection_in_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+        self.database['infl_in_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
             lambda x: str(in_value + str(x['plural_state'])) if (
                     x['part_of_speech_simplified'] == 'Noun' and pd.isnull(x['plural_state']) == False) else np.nan,
             axis=1)
-        self.database['inflection_that_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
+        self.database['infl_that_plural'] = self.database[['plural_state', 'part_of_speech_simplified']].apply(
             lambda x: str(that_value + the_value + str(x['plural_state'])) if (x['part_of_speech_simplified'] == 'Noun'
                                                                                and pd.isnull(
                         x['plural_state']) == False) else np.nan, axis=1)
 
-        print(self.database['inflection_the'])
-
-
-
-    def dictVerbCreat(self, table, dictionary):
-        table = table.reset_index()
-        for index, rows in table.iterrows():
-            for i in list(table.columns.difference(['id'])):
-                if pd.isnull(rows[(i)]) == False:
-                    self._createChaserDict(dictionary, rows['id'], rows[str(i)])
-
-    def verbs_dictionary(self):
-        self.dictVerbCreat(self.verb_conj_present,self.verb_conj_present_chaser)
-        self.dictVerbCreat(self.verb_conj_present_and, self.verb_conj_present_and_chaser)
-        self.dictVerbCreat(self.verb_conj_present_that, self.verb_conj_present_that_chaser)
-
-        self.dictVerbCreat(self.verb_conj_past,self.verb_conj_past_chaser)
-        self.dictVerbCreat(self.verb_conj_past_and, self.verb_conj_past_and_chaser)
-        self.dictVerbCreat(self.verb_conj_past_that, self.verb_conj_past_that_chaser)
-
-        self.dictVerbCreat(self.verb_conj_future, self.verb_conj_future_chaser)
-        self.dictVerbCreat(self.verb_conj_future_and, self.verb_conj_future_and_chaser)
-        self.dictVerbCreat(self.verb_conj_future_that, self.verb_conj_future_that_chaser)
-
-        list_dict = [self.verb_conj_present_chaser, self.verb_conj_present_and_chaser,
-                     self.verb_conj_present_that_chaser, self.verb_conj_past_chaser,
-                     self.verb_conj_past_and_chaser, self.verb_conj_past_that_chaser,
-                     self.verb_conj_future_chaser, self.verb_conj_future_and_chaser,
-                     self.verb_conj_present_that_chaser]
-        self.allverbs = {}
-
-        for i in range(len(list_dict)):
-            self.allverbs['dict_' + str(i)] = list_dict[i]
-
-
-
+        print(self.database['infl_the'])
 
     def createSimpleDf(self):
         self.simplifiedDf_list = list(
-            ['id', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified', 'meaning', 'inflection_the',
-             'inflection_to', 'inflection_from'
-                , 'inflection_in', 'inflection_that',
-             'plural_state', 'inflection_the_plural', 'inflection_to_plural',
-             'inflection_from_plural'
-                , 'inflection_in_plural', 'inflection_that_plural']) + self.list_present_verb_columns + \
-                                 self.list_past_verb_columns \
-                                 + self.verb_conj_past_and_columns + self.verb_conj_past_that_columns + \
-                                 self.verb_conj_present_and_columns + self.verb_conj_present_that_columns + \
-                                self.verb_conj_present_that_columns + self.verb_conj_future_and_columns + \
-                                 self.list_verb_future_columns
+            ['id', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified', 'meaning', 'infl_the',
+             'infl_to', 'infl_from'
+                , 'infl_in', 'infl_that',
+             'plural_state', 'infl_the_plural', 'infl_to_plural',
+             'infl_from_plural'
+                , 'infl_in_plural', 'infl_that_plural', 'pattern'])
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
@@ -319,235 +291,87 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 
     def _writekeysLoop(self, fname, index, row, pospeech: bool):
 
-        if pospeech is False and pd.isnull(row['hebrew_word_present_singular_masculine']) is False:
-            fname.write("""
+        fname.write(
+            """
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{id}"></a>
-<idx:orth value="{word}"><p><b>{word}</b>   |   <i>{pronunciation}</i></p>
-<idx:infl inflgrp="{inflgrp}">""".format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
-            pronunciation=row['hebrew_pronunciation']))
+<idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{pronunciation}</i></p>
+<idx:infl inflgrp="{inflgrp}"> """.format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
+                                          inflgrp=row['part_of_speech_simplified']))
+        for noun_inflection in self.noun_inflection_group:
+            if (pd.isnull(row[str(noun_inflection)])) == False:
+                for x in self.verb_inflection_group:
+                    if pd.isnull(row[str(x)]) == False:
+                        fname.write("""
+                    <idx:iform value="{inflgrp}" />""".format(inflgrp=row[str(noun_inflection)]))
 
-            for key in self.allverbs.keys():
-                try:
-                    for inflection in self.allverbs[str(key)][row['id']]:
-                        fname.write(
-"""{inflection}
-""".format(inflection=inflection))
-                except KeyError:
-                    continue
-
-            fname.write("""
-            </idx:infl >
-            </idx:orth>
-            <p>{meaning}</p>
-            </idx:short>
-            </idx:entry>
-            <hr style="width:50%", size="3", color=black>
-            """.format(meaning=row['meaning']))
-
-
-#             fname.write(
-#                 """
-# <idx:entry name="hebrew" scriptable="yes" spell="yes">
-# <idx:short><a id="{id}"></a>
-# <idx:orth value="{word}"><p><b>{word}</b>&nbsp;<hr class="vertical" />&nbsp;<i>{pronunciation}</i></p>
-# <idx:infl inflgrp="{inflgrp}">
-# <idx:iform value="{hebrew_word_present_singular_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_singular_feminine}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_plural_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_plural_feminine}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_1_singular_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_singular_feminine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_plural_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_plural_feminine}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_2_singular_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_singular_feminine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_plural_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_plural_feminine}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_3_singular_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_singular_feminine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_plural_masculine}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_plural_feminine}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_present_singular_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_singular_feminine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_plural_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_plural_feminine_andform}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_1_singular_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_singular_feminine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_plural_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_plural_feminine_andform}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_2_singular_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_singular_feminine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_plural_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_plural_feminine_andform}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_3_singular_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_singular_feminine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_plural_masculine_andform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_plural_feminine_andform}"></idx:iform>
-#
-#
-# <idx:iform value="{hebrew_word_present_singular_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_singular_feminine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_plural_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_present_plural_feminine_thatform}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_1_singular_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_singular_feminine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_plural_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_1_plural_feminine_thatform}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_2_singular_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_singular_feminine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_plural_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_2_plural_feminine_thatform}"></idx:iform>
-#
-# <idx:iform value="{hebrew_word_past_3_singular_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_singular_feminine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_plural_masculine_thatform}"></idx:iform>
-# <idx:iform value="{hebrew_word_past_3_plural_feminine_thatform}"></idx:iform>
-#
-#
-# </idx:infl>
-# </idx:orth>
-# <p>{meaning}</p>
-# </idx:short>
-# </idx:entry>
-# <hr style="width:50%", size="3", color=black>
-# """.format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
-#            pronunciation=row['hebrew_pronunciation'],
-#
-#            hebrew_word_present_singular_masculine=row['hebrew_word_present_singular_masculine'],
-#            hebrew_word_present_singular_feminine=row['hebrew_word_present_singular_feminine'],
-#            hebrew_word_present_plural_masculine=row['hebrew_word_present_plural_masculine'],
-#            hebrew_word_present_plural_feminine=row['hebrew_word_present_plural_feminine'],
-#
-#            hebrew_word_past_1_singular_masculine=row['hebrew_word_past_1_singular_masculine'],
-#            hebrew_word_past_1_singular_feminine=row['hebrew_word_past_1_singular_feminine'],
-#            hebrew_word_past_1_plural_masculine=row['hebrew_word_past_1_plural_masculine'],
-#            hebrew_word_past_1_plural_feminine=row['hebrew_word_past_1_plural_feminine'],
-#
-#            hebrew_word_past_2_singular_masculine=row['hebrew_word_past_2_singular_masculine'],
-#            hebrew_word_past_2_singular_feminine=row['hebrew_word_past_2_singular_feminine'],
-#            hebrew_word_past_2_plural_masculine=row['hebrew_word_past_2_plural_masculine'],
-#            hebrew_word_past_2_plural_feminine=row['hebrew_word_past_2_plural_feminine'],
-#
-#            hebrew_word_past_3_singular_masculine=row['hebrew_word_past_3_singular_masculine'],
-#            hebrew_word_past_3_singular_feminine=row['hebrew_word_past_3_singular_feminine'],
-#            hebrew_word_past_3_plural_masculine=row['hebrew_word_past_3_plural_masculine'],
-#            hebrew_word_past_3_plural_feminine=row['hebrew_word_past_3_plural_feminine'],
-#
-#            hebrew_word_present_singular_masculine_andform=row['hebrew_word_present_singular_masculine_andform'],
-#            hebrew_word_present_singular_feminine_andform=row['hebrew_word_present_singular_feminine_andform'],
-#            hebrew_word_present_plural_masculine_andform=row['hebrew_word_present_plural_masculine_andform'],
-#            hebrew_word_present_plural_feminine_andform=row['hebrew_word_present_plural_feminine_andform'],
-#
-#            hebrew_word_past_1_singular_masculine_andform=row['hebrew_word_past_1_singular_masculine_andform'],
-#            hebrew_word_past_1_singular_feminine_andform=row['hebrew_word_past_1_singular_feminine_andform'],
-#            hebrew_word_past_1_plural_masculine_andform=row['hebrew_word_past_1_plural_masculine_andform'],
-#            hebrew_word_past_1_plural_feminine_andform=row['hebrew_word_past_1_plural_feminine_andform'],
-#
-#            hebrew_word_past_2_singular_masculine_andform=row['hebrew_word_past_2_singular_masculine_andform'],
-#            hebrew_word_past_2_singular_feminine_andform=row['hebrew_word_past_2_singular_feminine_andform'],
-#            hebrew_word_past_2_plural_masculine_andform=row['hebrew_word_past_2_plural_masculine_andform'],
-#            hebrew_word_past_2_plural_feminine_andform=row['hebrew_word_past_2_plural_feminine_andform'],
-#
-#            hebrew_word_past_3_singular_masculine_andform=row['hebrew_word_past_3_singular_masculine_andform'],
-#            hebrew_word_past_3_singular_feminine_andform=row['hebrew_word_past_3_singular_feminine_andform'],
-#            hebrew_word_past_3_plural_masculine_andform=row['hebrew_word_past_3_plural_masculine_andform'],
-#            hebrew_word_past_3_plural_feminine_andform=row['hebrew_word_past_3_plural_feminine_andform'],
-#
-#            hebrew_word_present_singular_masculine_thatform=row['hebrew_word_present_singular_masculine_thatform'],
-#            hebrew_word_present_singular_feminine_thatform=row['hebrew_word_present_singular_feminine_thatform'],
-#            hebrew_word_present_plural_masculine_thatform=row['hebrew_word_present_plural_masculine_thatform'],
-#            hebrew_word_present_plural_feminine_thatform=row['hebrew_word_present_plural_feminine_thatform'],
-#
-#            hebrew_word_past_1_singular_masculine_thatform=row['hebrew_word_past_1_singular_masculine_thatform'],
-#            hebrew_word_past_1_singular_feminine_thatform=row['hebrew_word_past_1_singular_feminine_thatform'],
-#            hebrew_word_past_1_plural_masculine_thatform=row['hebrew_word_past_1_plural_masculine_thatform'],
-#            hebrew_word_past_1_plural_feminine_thatform=row['hebrew_word_past_1_plural_feminine_thatform'],
-#
-#            hebrew_word_past_2_singular_masculine_thatform=row['hebrew_word_past_2_singular_masculine_thatform'],
-#            hebrew_word_past_2_singular_feminine_thatform=row['hebrew_word_past_2_singular_feminine_thatform'],
-#            hebrew_word_past_2_plural_masculine_thatform=row['hebrew_word_past_2_plural_masculine_thatform'],
-#            hebrew_word_past_2_plural_feminine_thatform=row['hebrew_word_past_2_plural_feminine_thatform'],
-#
-#            hebrew_word_past_3_singular_masculine_thatform=row['hebrew_word_past_3_singular_masculine_thatform'],
-#            hebrew_word_past_3_singular_feminine_thatform=row['hebrew_word_past_3_singular_feminine_thatform'],
-#            hebrew_word_past_3_plural_masculine_thatform=row['hebrew_word_past_3_plural_masculine_thatform'],
-#            hebrew_word_past_3_plural_feminine_thatform=row['hebrew_word_past_3_plural_feminine_thatform']
-#
-#            )
-#             )
-        elif pospeech is True:
-            fname.write(
-                """
-<idx:entry name="hebrew" scriptable="yes" spell="yes">
-<idx:short><a id="{id}"></a>
-<idx:orth value="{word}"><p><b>{word}</b>   |   <i>{pronunciation}</i></p>
-<idx:infl inflgrp="{inflgrp}"> 
-<idx:iform value="{inflection_the}"></idx:iform>
-<idx:iform value="{inflection_from}"></idx:iform>
-<idx:iform value="{inflection_to}"></idx:iform>
-<idx:iform value="{inflection_in}"></idx:iform>
-<idx:iform value="{inflection_that}"></idx:iform>
-<idx:iform value="{inflection_the_plural}"></idx:iform>
-<idx:iform value="{inflection_from_plural}"></idx:iform>
-<idx:iform value="{inflection_to_plural}"></idx:iform>
-<idx:iform value="{inflection_in_plural}"></idx:iform>
-<idx:iform value="{inflection_that_plural}"></idx:iform>
+        fname.write("""
 </idx:infl> 
 </idx:orth>
+<p>{form}</p> 
 <p>{meaning}</p>
 </idx:short>
 </idx:entry>
-<hr style="width:50%", size="3", color=black> 
-""".format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
-           pronunciation=row['hebrew_pronunciation'],
+<hr style="width:50%", size="3", color=black>""".format(meaning=row['meaning'],
+                                                        form=row['part_of_speech_simplified']))
 
-           inflection_the=row['inflection_the'],
-           inflection_from=row['inflection_from'],
-           inflection_to=row['inflection_to'],
-           inflection_in=row['inflection_in'],
-           inflection_that=row['inflection_that'],
-           inflection_the_plural=row['inflection_the_plural'],
-           inflection_from_plural=row['inflection_from_plural'],
-           inflection_to_plural=row['inflection_to_plural'],
-           inflection_in_plural=row['inflection_in_plural'],
-           inflection_that_plural=row['inflection_that_plural']
-           ))
-        elif pospeech is False:
-            fname.write(
-                """
+    def _writeWordsVerb(self, fname, index, row):
+        fname.write("""
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
-<idx:short><a id="{id}"></a>
-<idx:orth value="{word}"><p><b>{word}</b>   |   <i>{pronunciation}</i></p>
+<idx:short><a id="{index}"></a>
+<idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{niqqud}</i></p>
+<idx:infl>""".format(index=index,
+                     word=row['hebrew_word'],
+                     niqqud=row['niqqud']))
+        for x in self.verb_inflection_group:
+            if pd.isnull(row[str(x)]) == False:
+                fname.write("""
+    <idx:iform value="{inflgrp}" />""".format(inflgrp=row[str(x)]))
 
-<idx:infl inflgrp="{inflgrp}">
+        fname.write("""
 </idx:infl>
 </idx:orth> 
-<p>{meaning}</p>
+<p>{form}&emsp;|&emsp;{gender}</p>
+<p><i><b>{infinitive}</b></i>&emsp;|&emsp;{pattern}</p>
+<p>1. {meaning}</p>
+<p>2. {english_word}</p>
 </idx:short>
 </idx:entry>
-<hr style="width:50%", size="3", color=black> 
-""".format(id=row['id'], word=row['word'], meaning=row['meaning'], inflgrp=row['part_of_speech_simplified'],
-           pronunciation=row['hebrew_pronunciation'])
-            )
+<hr style="width:50%", size="3", color=black>        
+        """.format(form=row['part_of_speech_simplified'],
+                   gender=row['gender'],
+                   infinitive=row['infinitive'],
+                   meaning=row['meaning'],
+                   english_word=row['english_word'],
+                   pattern=row['pattern']))
+
+    def _writeWordsGrammar(self, fname, row, index):
+        fname.write("""<idx:entry name="hebrew" scriptable="yes" spell="yes">
+<idx:short><a id="{index}"></a>
+<idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{niqqud}</i></p>""".format(index=index,
+                                                                              word=row['hebrew_word'],
+                                                                              niqqud=row['niqqud']))
 
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):
 
+        # Quick switch
+        self.csv2html_df['part_of_speech_simplified'] = self.csv2html_df['part_of_speech_simplified'].str.replace(
+            'Verb', 'Infinitive Verb')
+        # self.csv2html_df['part_of_simplified_speech'] = self.csv2html_df['word', 'part_of_simplified_speech'].apply(
+        #     lambda x: 'Infinitive Verb' if (x['part_of_simplified_speech'] == 'Verb')==True else x,axis=1)
+        self.csv2html_df.rename(columns={'word': 'hebrew_word'}, inplace=True)
+        temp_df = pd.concat([self.csv2html_df,
+                             self.verb_conj_present_filtered,
+                             self.verb_conj_past_filtered,
+                             self.verb_conj_future_filtered])
+        temp_df.reset_index(drop=True, inplace=True)
+
         count_start = 0
         file_line_max = max_file_line
-        if file_line_max > self.csv2html_df.shape[0]:
-            file_line_max = self.csv2html_df.shape[0]
-        noHTMLfiles = int(np.ceil(self.csv2html_df.shape[0] / file_line_max))
+        if file_line_max > temp_df.shape[0]:
+            file_line_max = temp_df.shape[0]
+        noHTMLfiles = int(np.ceil(temp_df.shape[0] / file_line_max))
 
         for i in range(noHTMLfiles):
             fname = f'{title_name}_{i}.html'
@@ -568,11 +392,15 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 
 <mbp:frameset>""")
                 # while count_start < file_line_max:
-                for index, row in self.csv2html_df.iloc[count_start:file_line_max].iterrows():
-                    if row['part_of_speech_simplified'] == 'Noun':
+                for index, row in temp_df.iloc[count_start:file_line_max].iterrows():
+                    if row['part_of_speech_simplified'] == 'Noun' or row[
+                        'part_of_speech_simplified'] == 'Infinitive Verb':
                         self._writekeysLoop(f, index, row, pospeech=True)
+                    elif row['part_of_speech_simplified'] == 'Verb':
+                        self._writeWordsVerb(f, index, row)
                     else:
-                        self._writekeysLoop(f, index, row, pospeech=False)
+                        self._writekeysLoop(f, index, row, False)
+
                 count_start = file_line_max
                 file_line_max += max_file_line
                 f.write("""
