@@ -37,29 +37,38 @@ class CreateOPF:
         self.htmlfiles = []
 
     def runCSV2HTML(self):
-        self.csv2html.importNounPluralDb()
-        self.csv2html.hebrewPluralClean()
-        self.csv2html.importVerbConjPresent_ver2()
-        self.csv2html.importVerbConjPresent()
-        self.csv2html.importVerbConjPast()
-        self.csv2html.importVerbConjFut()
 
-        self.csv2html.hebrewVerbsPresClean()
-        self.csv2html.hebrewVerbsPastClean()
-        self.csv2html.hebrewVerbsFutureClean()
+        #databases
+        self.csv2html.extractForm()
+        self.csv2html.extractPattern()
         self.csv2html.hebrewWordsClean('word')
 
-        self.csv2html.mergeNounPlurals()
-        self.csv2html.mergeVerbPresent()
-        self.csv2html.mergeVerbPast()
-        self.csv2html.mergeVerbFuture()
 
-        self.csv2html.extractForm()
+        #nouns
+        self.csv2html.importNounPluralDb()
+        self.csv2html.hebrewPluralClean()
+        #verbs
+        self.csv2html.importVerbConjPresent_ver2()
+        self.csv2html.importVerbConjPast_ver2()
+        self.csv2html.importVerbConjFut_ver()
+        self.csv2html.cleanVerbWord()
+        self.csv2html.inflectVerbs()
+
+
+
+
+
+
+
+        self.csv2html.mergeNounPlurals()
+
+
+
         self.csv2html.createDefInflection()
-        self.csv2html.verbs_dictionary()
+
 
         self.csv2html.createSimpleDf()
-        self.csv2html.writeHTML('hebrew_to_english', 1000)
+        self.csv2html.writeHTML('hebrew_to_english', 10000)
         self.htmlfiles = self.csv2html.list_file_names
 
     @contextmanager

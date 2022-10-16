@@ -39,6 +39,10 @@
                 <item id="dictionary7" href="hebrew_to_english_7.html" media-type="text/x-oeb1-document"/>
                 
                 <item id="dictionary8" href="hebrew_to_english_8.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary9" href="hebrew_to_english_9.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary10" href="hebrew_to_english_10.html" media-type="text/x-oeb1-document"/>
                 </manifest>
             
             <spine>
@@ -59,6 +63,10 @@
                     <itemref idref="dictionary7"/>
                 
                     <itemref idref="dictionary8"/>
+                
+                    <itemref idref="dictionary9"/>
+                
+                    <itemref idref="dictionary10"/>
                 
 </spine>            
 <tours/>
