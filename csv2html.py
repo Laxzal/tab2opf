@@ -6,7 +6,7 @@ id  |   word    |   meaning
 '''
 import contextlib
 import re
-
+import emoji
 import numpy as np
 import pandas as pd
 
@@ -26,7 +26,7 @@ class SimpleCSV2HTML:
         self.verb_conj_future_file = r"/Users/calvin/Documents" \
                                      r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
 
-        self.noun_inflection_group = ['plural_state','infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
+        self.noun_inflection_group = ['plural_state', 'infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
                                       'infl_from_plural', 'infl_to_plural', 'infl_in_plural', 'infl_that_plural']
         self.verb_inflection_group = ['chaser', 'infl_when_cond', 'infl_that', 'infl_and', 'infl_when_cond_chaser',
                                       'infl_that_chaser', 'infl_and_chaser']
@@ -40,11 +40,17 @@ class SimpleCSV2HTML:
         self.verb_conj_present_filtered = None
         self.verb_conj_past_filtered = None
         self.verb_conj_future_filtered = None
+
+        self.remove_conv_emoji = r"(:)(.*?)(:)"
         # Automatic Functions to Run
         self.importDbFile()
 
     def importDbFile(self):
         self.database = pd.read_csv(self.database_fname)  # encoding="ISO-8859-8", error_bad_lines=)
+        self.database['meaning'] = self.database['meaning'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.database['meaning'] = self.database['meaning'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
         print(self.database.head())
 
     def importNounPluralDb(self):
@@ -54,6 +60,17 @@ class SimpleCSV2HTML:
 
     def importVerbConjPresent_ver2(self):
         self.verb_conj_present_ = pd.read_csv(self.verb_conj_present_file)
+        self.verb_conj_present_['english_word'] = self.verb_conj_present_['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.verb_conj_present_['english_word'] = self.verb_conj_present_['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+
+        self.verb_conj_present_['gender'] = np.where(
+            self.verb_conj_present_[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.verb_conj_present_['gender'])
+        self.verb_conj_present_ = self.verb_conj_present_.drop_duplicates(
+            ['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+
         self.verb_conj_present_ = self.verb_conj_present_.merge(self.database, left_on='id', right_on='id')
         self.verb_conj_present_filtered = self.verb_conj_present_[['id', 'hebrew_word', 'english_word', 'chaser',
                                                                    'word', 'hebrew_pronunciation',
@@ -64,6 +81,17 @@ class SimpleCSV2HTML:
 
     def importVerbConjPast_ver2(self):
         self.verb_conj_past_ = pd.read_csv(self.verb_conj_past_file)
+        self.verb_conj_past_['english_word'] = self.verb_conj_past_['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.verb_conj_past_['english_word'] = self.verb_conj_past_['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+
+        self.verb_conj_past_['gender'] = np.where(
+            self.verb_conj_past_[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.verb_conj_past_['gender'])
+        self.verb_conj_past_ = self.verb_conj_past_.drop_duplicates(
+            ['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+
         self.verb_conj_past_ = self.verb_conj_past_.merge(self.database, left_on='id', right_on='id')
         self.verb_conj_past_filtered = self.verb_conj_past_[['id', 'hebrew_word', 'english_word', 'chaser', 'word',
                                                              'hebrew_pronunciation', 'part_of_speech_simplified',
@@ -74,6 +102,17 @@ class SimpleCSV2HTML:
 
     def importVerbConjFut_ver(self):
         self.verb_conj_future_ = pd.read_csv(self.verb_conj_future_file)
+        self.verb_conj_future_['english_word'] = self.verb_conj_future_['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.verb_conj_future_['english_word'] = self.verb_conj_future_['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+
+        self.verb_conj_future_['gender'] = np.where(
+            self.verb_conj_future_[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.verb_conj_future_['gender'])
+        self.verb_conj_future_ = self.verb_conj_future_.drop_duplicates(
+            ['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+
         self.verb_conj_future_ = self.verb_conj_future_.merge(self.database, left_on='id', right_on='id')
         self.verb_conj_future_filtered = self.verb_conj_future_[
             ['id', 'hebrew_word', 'english_word', 'chaser', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified',
@@ -296,17 +335,25 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{id}"></a>
 <idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{pronunciation}</i></p>
-<idx:infl inflgrp="{inflgrp}"> """.format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
-                                          inflgrp=row['part_of_speech_simplified']))
+""".format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
+           inflgrp=row['part_of_speech_simplified']))
+        if not pd.isnull(row[self.noun_inflection_group]).all():
+            fname.write(
+                """<idx:infl>
+""")
+
         for noun_inflection in self.noun_inflection_group:
             if (pd.isnull(row[str(noun_inflection)])) == False:
                 for x in self.verb_inflection_group:
                     if pd.isnull(row[str(x)]) == False:
-                        fname.write("""
-                    <idx:iform value="{inflgrp}" />""".format(inflgrp=row[str(noun_inflection)]))
+                        fname.write(
+                            """<idx:iform value="{inflgrp}" />
+""".format(inflgrp=row[str(noun_inflection)]))
+        if not pd.isnull(row[self.noun_inflection_group]).all():
+            fname.write(
+                """</idx:infl>""")
 
         fname.write("""
-</idx:infl> 
 </idx:orth>
 <p>{form}</p> 
 <p>{meaning}</p>
@@ -320,16 +367,24 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{index}"></a>
 <idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{niqqud}</i></p>
-<idx:infl>""".format(index=index,
-                     word=row['hebrew_word'],
-                     niqqud=row['niqqud']))
+""".format(index=index,
+           word=row['hebrew_word'],
+           niqqud=row['niqqud']))
+        if not pd.isnull(row[self.verb_inflection_group]).all():
+            fname.write("""
+<idx:infl>
+""")
+
         for x in self.verb_inflection_group:
             if pd.isnull(row[str(x)]) == False:
-                fname.write("""
-    <idx:iform value="{inflgrp}" />""".format(inflgrp=row[str(x)]))
+                fname.write(
+                    """<idx:iform value="{inflgrp}" />
+""".format(inflgrp=row[str(x)]))
+        if not pd.isnull(row[self.verb_inflection_group]).all():
+            fname.write("""
+</idx:infl>""")
 
         fname.write("""
-</idx:infl>
 </idx:orth> 
 <p>{form}&emsp;|&emsp;{gender}</p>
 <p><i><b>{infinitive}</b></i>&emsp;|&emsp;{pattern}</p>
@@ -349,8 +404,8 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
         fname.write("""<idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{index}"></a>
 <idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{niqqud}</i></p>""".format(index=index,
-                                                                              word=row['hebrew_word'],
-                                                                              niqqud=row['niqqud']))
+                                                                                    word=row['hebrew_word'],
+                                                                                    niqqud=row['niqqud']))
 
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):

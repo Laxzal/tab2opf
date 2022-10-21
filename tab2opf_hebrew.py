@@ -29,8 +29,10 @@ from csv2html import SimpleCSV2HTML
 
 class CreateOPF:
 
-    def __init__(self, title: str = 'Dictionary_Name', input_lang: str = 'he', output_lang: str = 'en'):
+    def __init__(self, title: str = 'Dictionary_Name', book_name: str = 'Dictionary Kindle', input_lang: str = 'he',
+                 output_lang: str = 'en'):
         self.title = title
+        self.book_name = book_name
         self.input_lang = input_lang
         self.output_lang = output_lang
         self.csv2html = SimpleCSV2HTML("/Users/calvin/Documents/hebrew_dictionary/pealim_database.csv")
@@ -38,37 +40,27 @@ class CreateOPF:
 
     def runCSV2HTML(self):
 
-        #databases
+        # databases
         self.csv2html.extractForm()
         self.csv2html.extractPattern()
         self.csv2html.hebrewWordsClean('word')
 
-
-        #nouns
+        # nouns
         self.csv2html.importNounPluralDb()
         self.csv2html.hebrewPluralClean()
-        #verbs
+        # verbs
         self.csv2html.importVerbConjPresent_ver2()
         self.csv2html.importVerbConjPast_ver2()
         self.csv2html.importVerbConjFut_ver()
         self.csv2html.cleanVerbWord()
         self.csv2html.inflectVerbs()
 
-
-
-
-
-
-
         self.csv2html.mergeNounPlurals()
-
-
 
         self.csv2html.createDefInflection()
 
-
         self.csv2html.createSimpleDf()
-        self.csv2html.writeHTML('hebrew_to_english', 10000)
+        self.csv2html.writeHTML(str(self.title), 10000)
         self.htmlfiles = self.csv2html.list_file_names
 
     @contextmanager
@@ -100,7 +92,7 @@ class CreateOPF:
 
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
-            """.format(name=self.title, source=self.input_lang, target=self.output_lang))
+            """.format(name=self.book_name, source=self.input_lang, target=self.output_lang))
 
             for z in range(len(self.htmlfiles)):
                 f.write("""
@@ -126,7 +118,7 @@ class CreateOPF:
         assert f.closed is True
 
 
-test = CreateOPF(title='hebrew_to_english_dict')
+test = CreateOPF(title='hebrew2english_dict', book_name='Hebrew English Dictionary')
 test.runCSV2HTML()
 test.openOPF()
 
