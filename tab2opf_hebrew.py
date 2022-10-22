@@ -22,6 +22,7 @@ https://gist.github.com/carlopires/1262033 --ISO Codes for langauges to implemen
 
 '''
 import os
+import sys
 from contextlib import contextmanager
 
 from csv2html import SimpleCSV2HTML
@@ -31,11 +32,15 @@ class CreateOPF:
 
     def __init__(self, title: str = 'Dictionary_Name', book_name: str = 'Dictionary Kindle', input_lang: str = 'he',
                  output_lang: str = 'en'):
+        if sys.platform.lower() == 'darwin':
+            os.chdir("/Users/calvin/Documents/hebrew_dictionary/")
+
+
         self.title = title
         self.book_name = book_name
         self.input_lang = input_lang
         self.output_lang = output_lang
-        self.csv2html = SimpleCSV2HTML("/Users/calvin/Documents/hebrew_dictionary/pealim_database.csv")
+        self.csv2html = SimpleCSV2HTML("pealim_database.csv")
         self.htmlfiles = []
 
     def runCSV2HTML(self):

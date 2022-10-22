@@ -5,7 +5,10 @@ id  |   word    |   meaning
 
 '''
 import contextlib
+import os
 import re
+import sys
+
 import emoji
 import numpy as np
 import pandas as pd
@@ -25,9 +28,12 @@ class SimpleCSV2HTML:
         self.verb_conj_past_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_past_table_db.csv"
         self.verb_conj_future_file = r"/Users/calvin/Documents" \
                                      r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
+        self.adjective_db = "pealim_adjective_table_db.csv"
 
         self.noun_inflection_group = ['plural_state', 'infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
-                                      'infl_from_plural', 'infl_to_plural', 'infl_in_plural', 'infl_that_plural']
+                                      'infl_from_plural', 'infl_to_plural', 'infl_in_plural', 'infl_that_plural',
+                                      'plural_construct_state',
+                                      'single_construct_state']
         self.verb_inflection_group = ['chaser', 'infl_when_cond', 'infl_that', 'infl_and', 'infl_when_cond_chaser',
                                       'infl_that_chaser', 'infl_and_chaser']
         self.from_value = str('מ')
@@ -165,6 +171,10 @@ class SimpleCSV2HTML:
     def hebrewPluralClean(self):
         self.noun_plural_db['plural_state'] = self.noun_plural_db['plural_state'].apply(
             lambda x: self._cleanNiqqudChars(x) if not pd.isnull(x) else x)
+        self.noun_plural_db['single_construct_state'] = self.noun_plural_db['single_construct_state'].apply(
+            lambda x: self._cleanNiqqudChars(x) if not pd.isnull(x) else x)
+        self.noun_plural_db['plural_construct_state'] = self.noun_plural_db['plural_construct_state'].apply(
+            lambda x: self._cleanNiqqudChars(x) if not pd.isnull(x) else x)
 
     def hebrewVerbsPresClean(self):
         self.verb_conj_present = self.verb_conj_present.applymap(
@@ -206,7 +216,8 @@ class SimpleCSV2HTML:
         self.database = self.database.merge(self.verb_conj_future_that, left_on=['id'], right_index=True, how='outer')
 
     def mergeNounPlurals(self):
-        self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state']], on=['id'], how='outer')
+        self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state','plural_construct_state',
+                                                                 'single_construct_state']], on=['id'], how='outer')
 
         print(self.database.head())
 
@@ -284,7 +295,7 @@ class SimpleCSV2HTML:
                 , 'infl_in', 'infl_that',
              'plural_state', 'infl_the_plural', 'infl_to_plural',
              'infl_from_plural'
-                , 'infl_in_plural', 'infl_that_plural', 'pattern'])
+                , 'infl_in_plural', 'infl_that_plural', 'pattern','plural_construct_state','single_construct_state'])
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
@@ -409,7 +420,10 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):
-
+        if sys.platform == "darwin":
+            os.chdir("/Users/calvin/PycharmProjects/tab2opf_git")
+        else:
+            print('chng')
         # Quick switch
         self.csv2html_df['part_of_speech_simplified'] = self.csv2html_df['part_of_speech_simplified'].str.replace(
             'Verb', 'Infinitive Verb')
