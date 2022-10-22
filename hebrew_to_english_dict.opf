@@ -7,9 +7,9 @@
 
 <metadata>
 	<dc-metadata>
-		<dc:Identifier id="uid">hebrew_to_english_dict</dc:Identifier>
+		<dc:Identifier id="uid">Hebrew English Dictionary</dc:Identifier>
 		<!-- Title of the document -->
-		<dc:Title><h2>hebrew_to_english_dict</h2></dc:Title>
+		<dc:Title><h2>Hebrew English Dictionary</h2></dc:Title>
 		<dc:Language>EN</dc:Language>
 	</dc-metadata>
 	<x-metadata>
@@ -22,27 +22,27 @@
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
             
-                <item id="dictionary0" href="hebrew_to_english_0.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary0" href="hebrew_to_english_dict_0.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary1" href="hebrew_to_english_1.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary1" href="hebrew_to_english_dict_1.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary2" href="hebrew_to_english_2.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary2" href="hebrew_to_english_dict_2.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary3" href="hebrew_to_english_3.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary3" href="hebrew_to_english_dict_3.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary4" href="hebrew_to_english_4.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary4" href="hebrew_to_english_dict_4.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary5" href="hebrew_to_english_5.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary5" href="hebrew_to_english_dict_5.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary6" href="hebrew_to_english_6.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary6" href="hebrew_to_english_dict_6.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary7" href="hebrew_to_english_7.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary7" href="hebrew_to_english_dict_7.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary8" href="hebrew_to_english_8.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary8" href="hebrew_to_english_dict_8.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary9" href="hebrew_to_english_9.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary9" href="hebrew_to_english_dict_9.html" media-type="text/x-oeb1-document"/>
                 
-                <item id="dictionary10" href="hebrew_to_english_10.html" media-type="text/x-oeb1-document"/>
+                <item id="dictionary10" href="hebrew_to_english_dict_10.html" media-type="text/x-oeb1-document"/>
                 </manifest>
             
             <spine>
