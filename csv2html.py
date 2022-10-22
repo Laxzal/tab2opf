@@ -77,7 +77,12 @@ class SimpleCSV2HTML:
         self.adjectives_df_pivot = self.adjectives_df.pivot(index=['id'], columns=['gender', 'form'])
         self.adjective_columns = ['_'.join(tup) for tup in self.adjectives_df_pivot.columns.values]
         self.adjectives_df_pivot.columns = self.adjective_columns
+        for heading in list(self.adjectives_df_pivot.columns):
+            self.adjectives_df_pivot['theinfl_' +str(heading)] = self.adjectives_df_pivot[heading].apply(lambda x: "{}{}".format(self.the_value,
+                                                                                         x) if not pd.isnull(x) else np.nan)
 
+        self.database = self.database.merge(self.adjectives_df_pivot, left_on='id', right_index=True, how='outer')
+        self.adj_infl = list(self.adjectives_df_pivot.columns)
 
     def importVerbConjPresent_ver2(self):
         self.verb_conj_present_ = pd.read_csv(self.verb_conj_present_file)
@@ -175,6 +180,8 @@ class SimpleCSV2HTML:
                                        self.verb_conj_future_filtered]
         for verb_file in self.list_of_verb_databases:
             self._inflectionVerbs(verb_file)
+
+
 
     def _cleanNiqqudChars(self, my_string):
         return ''.join(['' if 1456 <= ord(c) <= 1479 else c for c in my_string])
@@ -310,49 +317,12 @@ class SimpleCSV2HTML:
                 , 'infl_in', 'infl_that',
              'plural_state', 'infl_the_plural', 'infl_to_plural',
              'infl_from_plural'
-                , 'infl_in_plural', 'infl_that_plural', 'pattern','plural_construct_state','single_construct_state'])
+                , 'infl_in_plural', 'infl_that_plural', 'pattern','plural_construct_state','single_construct_state']) + self.adj_infl
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
     @contextlib.contextmanager
-    def writeKeys(self, title_name):
-        self.fname = f'{title_name}.html'
-        with open(self.fname, 'w') as f:
-            f.write("""
-            <html xmlns:math="http://exslt.org/math" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tl="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf"
 
-xmlns:saxon="http://saxon.sf.net/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-
-xmlns:cx="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf" xmlns:dc="http://purl.org/dc/elements/1.1/"
-
-xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf" xmlns:mmc="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf" xmlns:idx="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.pdf">
-
-<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>
-
-<body>
-
-<mbp:frameset> 
-            """)
-            for index, row in self.csv2html_df.iterrows():
-                f.write(
-                    """
-<idx:entry name="hebrew" scriptable="yes" spell="yes">
-<idx:short><a id="{id}"></a>
-<idx:orth value="{word}">
-</idx:orth>
-<p>{meaning}</p>
-</idx:short>
-</idx:entry>
-""".format(id=row['id'], word=row['word'], meaning=row['meaning'])
-                )
-            f.write("""
-        </mbp:frameset>
-
-</body>
-
-</html> 
-        """)
-        assert f.closed is True
 
     def _writekeysLoop(self, fname, index, row, pospeech: bool):
 
@@ -369,12 +339,11 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 """)
 
         for noun_inflection in self.noun_inflection_group:
-            if (pd.isnull(row[str(noun_inflection)])) == False:
-                for x in self.verb_inflection_group:
-                    if pd.isnull(row[str(x)]) == False:
+            if not pd.isnull(row[str(noun_inflection)]):
                         fname.write(
                             """<idx:iform value="{inflgrp}" />
 """.format(inflgrp=row[str(noun_inflection)]))
+
         if not pd.isnull(row[self.noun_inflection_group]).all():
             fname.write(
                 """</idx:infl>""")
@@ -387,6 +356,39 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
 </idx:entry>
 <hr style="width:50%", size="3", color=black>""".format(meaning=row['meaning'],
                                                         form=row['part_of_speech_simplified']))
+
+    def _writeAdjectiveLoop(self, fname, index, row, pospeech: bool):
+
+        fname.write(
+            """
+<idx:entry name="hebrew" scriptable="yes" spell="yes">
+<idx:short><a id="{id}"></a>
+<idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{pronunciation}</i></p>
+""".format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
+           inflgrp=row['part_of_speech_simplified']))
+        if not pd.isnull(row[self.adj_infl]).all():
+            fname.write(
+                """<idx:infl>
+""")
+
+        for adj_inflection in self.adj_infl:
+            if (pd.isnull(row[str(adj_inflection)])) == False:
+                        fname.write(
+                            """<idx:iform value="{inflgrp}" />
+""".format(inflgrp=row[str(adj_inflection)]))
+
+        if not pd.isnull(row[self.adj_infl]).all():
+            fname.write(
+                """</idx:infl>""")
+
+        fname.write("""
+    </idx:orth>
+    <p>{form}</p> 
+    <p>{meaning}</p>
+    </idx:short>
+    </idx:entry>
+    <hr style="width:50%", size="3", color=black>""".format(meaning=row['meaning'],
+                                                            form=row['part_of_speech_simplified']))
 
     def _writeWordsVerb(self, fname, index, row):
         fname.write("""
@@ -482,6 +484,8 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
                         self._writekeysLoop(f, index, row, pospeech=True)
                     elif row['part_of_speech_simplified'] == 'Verb':
                         self._writeWordsVerb(f, index, row)
+                    elif row['part_of_speech_simplified'] == 'Adjective':
+                        self._writeAdjectiveLoop(f, index, row, pospeech=False)
                     else:
                         self._writekeysLoop(f, index, row, False)
 
