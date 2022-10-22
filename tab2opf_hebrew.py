@@ -53,6 +53,8 @@ class CreateOPF:
         # nouns
         self.csv2html.importNounPluralDb()
         self.csv2html.hebrewPluralClean()
+        #adjectives
+        self.csv2html.importAdjectivesDb()
         # verbs
         self.csv2html.importVerbConjPresent_ver2()
         self.csv2html.importVerbConjPast_ver2()

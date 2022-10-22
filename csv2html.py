@@ -63,6 +63,21 @@ class SimpleCSV2HTML:
         self.noun_plural_db = pd.read_csv(self.csv_noun_plural)
         # self.noun_plural_db = self.noun_plural_db.where(pd.notnull(self.noun_plural_db), "NaN")
         # TODO add inflections onto nouns
+    def importAdjectivesDb(self):
+        self.adjectives_df = pd.read_csv(self.adjective_db)
+        #Need to clean the niqqud
+        self.adjectives_df['hebrew_word'] = self.adjectives_df['hebrew_word'].apply(lambda x: self._cleanNiqqudChars(x)
+                                                                                   if not pd.isnull(x) else x)
+        self.adjectives_df['gender'] = np.where(
+            self.adjectives_df[['id', 'form', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.adjectives_df['gender'])
+        self.adjectives_df = self.adjectives_df.drop_duplicates(
+            ['id', 'form', 'hebrew_word', 'english_word', 'chaser'])
+        self.adjectives_df.drop(columns=['pronunciation','english_word'], inplace=True)
+        self.adjectives_df_pivot = self.adjectives_df.pivot(index=['id'], columns=['gender', 'form'])
+        self.adjective_columns = ['_'.join(tup) for tup in self.adjectives_df_pivot.columns.values]
+        self.adjectives_df_pivot.columns = self.adjective_columns
+
 
     def importVerbConjPresent_ver2(self):
         self.verb_conj_present_ = pd.read_csv(self.verb_conj_present_file)
