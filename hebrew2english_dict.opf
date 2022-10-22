@@ -39,6 +39,18 @@
                 <item id="dictionary7" href="hebrew2english_dict_7.html" media-type="text/x-oeb1-document"/>
                 
                 <item id="dictionary8" href="hebrew2english_dict_8.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary9" href="hebrew2english_dict_9.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary10" href="hebrew2english_dict_10.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary11" href="hebrew2english_dict_11.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary12" href="hebrew2english_dict_12.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary13" href="hebrew2english_dict_13.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary14" href="hebrew2english_dict_14.html" media-type="text/x-oeb1-document"/>
                 </manifest>
             
             <spine>
@@ -59,6 +71,18 @@
                     <itemref idref="dictionary7"/>
                 
                     <itemref idref="dictionary8"/>
+                
+                    <itemref idref="dictionary9"/>
+                
+                    <itemref idref="dictionary10"/>
+                
+                    <itemref idref="dictionary11"/>
+                
+                    <itemref idref="dictionary12"/>
+                
+                    <itemref idref="dictionary13"/>
+                
+                    <itemref idref="dictionary14"/>
                 
 </spine>            
 <tours/>
