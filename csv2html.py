@@ -29,7 +29,7 @@ class SimpleCSV2HTML:
         self.verb_conj_future_file = r"/Users/calvin/Documents" \
                                      r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
         self.adjective_db = "pealim_adjective_table_db.csv"
-
+        self.pronomial_file = "pealim_pronomial_db.csv"
         self.noun_inflection_group = ['plural_state', 'infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
                                       'infl_from_plural', 'infl_to_plural', 'infl_in_plural', 'infl_that_plural',
                                       'plural_construct_state',
@@ -146,6 +146,25 @@ class SimpleCSV2HTML:
              'gender', 'pattern']]
         self.verb_conj_future_filtered['niqqud'] = self.verb_conj_future_filtered['hebrew_word'].copy()
         self.verb_conj_future_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
+
+    def importPronomialNoun(self):
+        self.pronomial_df = pd.read_csv(self.pronomial_file)
+        self.pronomial_df['hebrew_word'] = self.pronomial_df['hebrew_word'].apply(self._cleanNiqqudChars)
+        self.pronomial_df['english_word'] = self.pronomial_df['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.pronomial_df['english_word'] = self.pronomial_df['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+
+
+        self.pronomial_df['gender'] = np.where(
+            self.pronomial_df[['id', 'noun_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.pronomial_df['gender'])
+        self.pronomial_df = self.pronomial_df.drop_duplicates(
+            ['id', 'noun_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+
+        self.pronomial_df['part_of_speech_simplified'] = "Pronomial Noun"
+
+
 
     def cleanVerbWord(self):
         self.verb_conj_present_filtered['hebrew_word'] = self.verb_conj_present_filtered['hebrew_word'].apply(
@@ -435,6 +454,40 @@ class SimpleCSV2HTML:
                                                                                     word=row['hebrew_word'],
                                                                                     niqqud=row['niqqud']))
 
+    def _writePronomialLoop(self, fname, index, row, pospeech: bool):
+
+        fname.write(
+            """
+<idx:entry name="hebrew" scriptable="yes" spell="yes">
+<idx:short><a id="{id}"></a>
+<idx:orth value="{word}"><p><b>{word}</b>
+""".format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
+           inflgrp=row['part_of_speech_simplified']))
+#             if not pd.isnull(row[self.adj_infl]).all():
+#                 fname.write(
+#                     """<idx:infl>
+#     """)
+#
+#             for adj_inflection in self.adj_infl:
+#                 if (pd.isnull(row[str(adj_inflection)])) == False:
+#                     fname.write(
+#                         """<idx:iform value="{inflgrp}" />
+# """.format(inflgrp=row[str(adj_inflection)]))
+#
+#             if not pd.isnull(row[self.adj_infl]).all():
+#                 fname.write(
+#                     """</idx:infl>""")
+
+        fname.write("""
+    </idx:orth>
+    <p>{form}&emsp;|&emsp;<i>{gender}</i></p> 
+    <p>{meaning}</p>
+    </idx:short>
+    </idx:entry>
+    <hr style="width:50%", size="3", color=black>""".format(meaning=row['english_word'],
+                                                            form=row['part_of_speech_simplified'],
+                                                            gender=row['gender']))
+
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):
         if sys.platform == "darwin":
@@ -450,7 +503,8 @@ class SimpleCSV2HTML:
         temp_df = pd.concat([self.csv2html_df,
                              self.verb_conj_present_filtered,
                              self.verb_conj_past_filtered,
-                             self.verb_conj_future_filtered])
+                             self.verb_conj_future_filtered,
+                             self.pronomial_df])
         temp_df.reset_index(drop=True, inplace=True)
 
         count_start = 0
@@ -486,6 +540,8 @@ xmlns:mbp="https://kindlegen.s3.amazonaws.com/AmazonKindlePublishingGuidelines.p
                         self._writeWordsVerb(f, index, row)
                     elif row['part_of_speech_simplified'] == 'Adjective':
                         self._writeAdjectiveLoop(f, index, row, pospeech=False)
+                    elif row['part_of_speech_simplified'] == 'Pronomial Noun':
+                        self._writePronomialLoop(f, index, row, False)
                     else:
                         self._writekeysLoop(f, index, row, False)
 
