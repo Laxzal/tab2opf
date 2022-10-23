@@ -460,7 +460,7 @@ class SimpleCSV2HTML:
             """
 <idx:entry name="hebrew" scriptable="yes" spell="yes">
 <idx:short><a id="{id}"></a>
-<idx:orth value="{word}"><p><b>{word}</b>&emsp;|&emsp;<i>{pronunciation}</i></p>
+<idx:orth value="{word}"><p><b>{word}</b>
 """.format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
            inflgrp=row['part_of_speech_simplified']))
 #             if not pd.isnull(row[self.adj_infl]).all():
@@ -480,12 +480,13 @@ class SimpleCSV2HTML:
 
         fname.write("""
     </idx:orth>
-    <p>{form}</p> 
+    <p>{form}&emsp;|&emsp;<i>{gender}</i></p> 
     <p>{meaning}</p>
     </idx:short>
     </idx:entry>
-    <hr style="width:50%", size="3", color=black>""".format(meaning=row['meaning'],
-                                                            form=row['part_of_speech_simplified']))
+    <hr style="width:50%", size="3", color=black>""".format(meaning=row['english_word'],
+                                                            form=row['part_of_speech_simplified'],
+                                                            gender=row['gender']))
 
     @contextlib.contextmanager
     def writeHTML(self, title_name, max_file_line: int = 1000):
