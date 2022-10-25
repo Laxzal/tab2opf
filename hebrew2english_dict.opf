@@ -11,9 +11,10 @@
 		<!-- Title of the document -->
 		<dc:Title><h2>Hebrew English Dictionary</h2></dc:Title>
 		<dc:Language>EN</dc:Language>
+		<meta: name ="cover" content="my-cover-image" /> 
 	</dc-metadata>
 	<x-metadata>
-	        <output encoding="utf-8" flatten-dynamic-dir="yes"/>
+	    <output encoding="utf-8" flatten-dynamic-dir="yes"/>
 		<DictionaryInLanguage>he</DictionaryInLanguage>
 		<DictionaryOutLanguage>en</DictionaryOutLanguage>
 	</x-metadata>
@@ -21,6 +22,7 @@
 
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
+        <item id="cover" href="design2.jpg" media-type="image/jpeg"  />
             
                 <item id="dictionary0" href="hebrew2english_dict_0.html" media-type="text/x-oeb1-document"/>
                 
@@ -54,6 +56,7 @@
                 </manifest>
             
             <spine>
+            <itemref idref="cover" />
                     <itemref idref="dictionary0"/>
                 
                     <itemref idref="dictionary1"/>

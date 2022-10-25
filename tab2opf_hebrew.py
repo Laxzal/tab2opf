@@ -31,10 +31,9 @@ from csv2html import SimpleCSV2HTML
 class CreateOPF:
 
     def __init__(self, title: str = 'Dictionary_Name', book_name: str = 'Dictionary Kindle', input_lang: str = 'he',
-                 output_lang: str = 'en'):
+                 output_lang: str = 'en', cover_name: str="cover", image_name: str="design2.jpg"):
         if sys.platform.lower() == 'darwin':
             os.chdir("/Users/calvin/Documents/hebrew_dictionary/")
-
 
         self.title = title
         self.book_name = book_name
@@ -42,6 +41,8 @@ class CreateOPF:
         self.output_lang = output_lang
         self.csv2html = SimpleCSV2HTML("pealim_database.csv")
         self.htmlfiles = []
+        self.cover_name = cover_name
+        self.image_name = image_name
 
     def runCSV2HTML(self):
 
@@ -53,10 +54,10 @@ class CreateOPF:
         # nouns
         self.csv2html.importNounPluralDb()
         self.csv2html.hebrewPluralClean()
-        #adjectives
+        # adjectives
         self.csv2html.importAdjectivesDb()
 
-        #pronomial nouns
+        # pronomial nouns
         self.csv2html.importPronomialNoun()
         # verbs
         self.csv2html.importVerbConjPresent_ver2()
@@ -92,9 +93,10 @@ class CreateOPF:
 		<!-- Title of the document -->
 		<dc:Title><h2>{name}</h2></dc:Title>
 		<dc:Language>EN</dc:Language>
+		<meta: name ="{cover_name}" content="my-cover-image" /> 
 	</dc-metadata>
 	<x-metadata>
-	        <output encoding="utf-8" flatten-dynamic-dir="yes"/>
+	    <output encoding="utf-8" flatten-dynamic-dir="yes"/>
 		<DictionaryInLanguage>{source}</DictionaryInLanguage>
 		<DictionaryOutLanguage>{target}</DictionaryOutLanguage>
 	</x-metadata>
@@ -102,7 +104,9 @@ class CreateOPF:
 
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
-            """.format(name=self.book_name, source=self.input_lang, target=self.output_lang))
+        <item id="{cover_name}" properties="cover-image" href="{imagename}" media-type="image/jpeg"  />
+            """.format(name=self.book_name, source=self.input_lang, target=self.output_lang,
+                       cover_name = self.cover_name, imagename=self.image_name))
 
             for z in range(len(self.htmlfiles)):
                 f.write("""
@@ -111,7 +115,8 @@ class CreateOPF:
 
             f.write("""</manifest>
             
-            <spine>""")
+            <spine>
+            <itemref idref="{cover_name}" />""".format(cover_name=self.cover_name))
             for y in range(len(self.htmlfiles)):
                 f.write("""
                     <itemref idref="dictionary{y}"/>
