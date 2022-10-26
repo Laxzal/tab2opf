@@ -55,6 +55,8 @@
                 <item id="dictionary14" href="hebrew2english_dict_14.html" media-type="text/x-oeb1-document"/>
                 
                 <item id="dictionary15" href="hebrew2english_dict_15.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary16" href="hebrew2english_dict_16.html" media-type="text/x-oeb1-document"/>
                 </manifest>
             
             <spine>
@@ -90,6 +92,8 @@
                     <itemref idref="dictionary14"/>
                 
                     <itemref idref="dictionary15"/>
+                
+                    <itemref idref="dictionary16"/>
                 
 </spine>            
 <tours/>
