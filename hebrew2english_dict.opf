@@ -22,7 +22,7 @@
 
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
-        <item id="cover" href="design2.jpg" media-type="image/jpeg"  />
+        <item id="cover" properties="cover-image" href="design2.jpg" media-type="image/jpeg"  />
             
                 <item id="dictionary0" href="hebrew2english_dict_0.html" media-type="text/x-oeb1-document"/>
                 
@@ -53,6 +53,8 @@
                 <item id="dictionary13" href="hebrew2english_dict_13.html" media-type="text/x-oeb1-document"/>
                 
                 <item id="dictionary14" href="hebrew2english_dict_14.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary15" href="hebrew2english_dict_15.html" media-type="text/x-oeb1-document"/>
                 </manifest>
             
             <spine>
@@ -86,6 +88,8 @@
                     <itemref idref="dictionary13"/>
                 
                     <itemref idref="dictionary14"/>
+                
+                    <itemref idref="dictionary15"/>
                 
 </spine>            
 <tours/>

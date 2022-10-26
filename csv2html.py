@@ -19,6 +19,8 @@ import pandas as pd
 class SimpleCSV2HTML:
 
     def __init__(self, database_fname):
+        if sys.platform.lower() == 'darwin':
+            os.chdir("/Users/calvin/Documents/hebrew_dictionary/")
 
         self.database_fname = database_fname
         self.database = None
@@ -28,6 +30,7 @@ class SimpleCSV2HTML:
         self.verb_conj_past_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_past_table_db.csv"
         self.verb_conj_future_file = r"/Users/calvin/Documents" \
                                      r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
+        self.imperative_verb_file = "pealim_verb_imperative_table_db.csv"
         self.adjective_db = "pealim_adjective_table_db.csv"
         self.pronomial_file = "pealim_pronomial_db.csv"
         self.noun_inflection_group = ['plural_state', 'infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
@@ -63,23 +66,25 @@ class SimpleCSV2HTML:
         self.noun_plural_db = pd.read_csv(self.csv_noun_plural)
         # self.noun_plural_db = self.noun_plural_db.where(pd.notnull(self.noun_plural_db), "NaN")
         # TODO add inflections onto nouns
+
     def importAdjectivesDb(self):
         self.adjectives_df = pd.read_csv(self.adjective_db)
-        #Need to clean the niqqud
+        # Need to clean the niqqud
         self.adjectives_df['hebrew_word'] = self.adjectives_df['hebrew_word'].apply(lambda x: self._cleanNiqqudChars(x)
-                                                                                   if not pd.isnull(x) else x)
+        if not pd.isnull(x) else x)
         self.adjectives_df['gender'] = np.where(
             self.adjectives_df[['id', 'form', 'hebrew_word', 'english_word', 'chaser']].duplicated(
                 keep=False), str('both'), self.adjectives_df['gender'])
         self.adjectives_df = self.adjectives_df.drop_duplicates(
             ['id', 'form', 'hebrew_word', 'english_word', 'chaser'])
-        self.adjectives_df.drop(columns=['pronunciation','english_word'], inplace=True)
+        self.adjectives_df.drop(columns=['pronunciation', 'english_word'], inplace=True)
         self.adjectives_df_pivot = self.adjectives_df.pivot(index=['id'], columns=['gender', 'form'])
         self.adjective_columns = ['_'.join(tup) for tup in self.adjectives_df_pivot.columns.values]
         self.adjectives_df_pivot.columns = self.adjective_columns
         for heading in list(self.adjectives_df_pivot.columns):
-            self.adjectives_df_pivot['theinfl_' +str(heading)] = self.adjectives_df_pivot[heading].apply(lambda x: "{}{}".format(self.the_value,
-                                                                                         x) if not pd.isnull(x) else np.nan)
+            self.adjectives_df_pivot['theinfl_' + str(heading)] = self.adjectives_df_pivot[heading].apply(
+                lambda x: "{}{}".format(self.the_value,
+                                        x) if not pd.isnull(x) else np.nan)
 
         self.database = self.database.merge(self.adjectives_df_pivot, left_on='id', right_index=True, how='outer')
         self.adj_infl = list(self.adjectives_df_pivot.columns)
@@ -147,6 +152,31 @@ class SimpleCSV2HTML:
         self.verb_conj_future_filtered['niqqud'] = self.verb_conj_future_filtered['hebrew_word'].copy()
         self.verb_conj_future_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
 
+    def importImperativeVerb(self):
+        self.imperative_verb_df = pd.read_csv(self.imperative_verb_file)
+        # self.verb_conj_future_filtered['niqqud'] = self.verb_conj_future_filtered['hebrew_word'].copy()
+        # self.imperative_verb_df['hebrew_word'] = self.imperative_verb_df['hebrew_word'].apply(self._cleanNiqqudChars)
+        self.imperative_verb_df['english_word'] = self.imperative_verb_df['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.imperative_verb_df['english_word'] = self.imperative_verb_df['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+        self.imperative_verb_df['hebrew_word'] = self.imperative_verb_df['hebrew_word'].apply(
+            lambda x: x.replace("!", ""))
+
+        self.imperative_verb_df['gender'] = np.where(
+            self.imperative_verb_df[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.imperative_verb_df['gender'])
+        self.imperative_verb_df = self.imperative_verb_df.drop_duplicates(
+            ['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+
+        self.imperative_verb_df = self.imperative_verb_df.merge(self.database, left_on='id', right_on='id')
+        self.imperative_verb_df_filtered = self.imperative_verb_df[
+            ['id', 'hebrew_word', 'english_word', 'chaser', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified',
+             'meaning',
+             'gender', 'pattern']]
+        self.imperative_verb_df_filtered['niqqud'] = self.imperative_verb_df_filtered['hebrew_word'].copy()
+        self.imperative_verb_df_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
+
     def importPronomialNoun(self):
         self.pronomial_df = pd.read_csv(self.pronomial_file)
         self.pronomial_df['hebrew_word'] = self.pronomial_df['hebrew_word'].apply(self._cleanNiqqudChars)
@@ -154,7 +184,6 @@ class SimpleCSV2HTML:
             lambda x: emoji.demojize(x).strip())
         self.pronomial_df['english_word'] = self.pronomial_df['english_word'].apply(
             lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
-
 
         self.pronomial_df['gender'] = np.where(
             self.pronomial_df[['id', 'noun_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
@@ -164,7 +193,7 @@ class SimpleCSV2HTML:
 
         self.pronomial_df['part_of_speech_simplified'] = "Pronomial Noun"
 
-
+        # self.imperative_verb_df['part_of_speech_simplified'] = "Verb"
 
     def cleanVerbWord(self):
         self.verb_conj_present_filtered['hebrew_word'] = self.verb_conj_present_filtered['hebrew_word'].apply(
@@ -172,6 +201,8 @@ class SimpleCSV2HTML:
         self.verb_conj_past_filtered['hebrew_word'] = self.verb_conj_past_['hebrew_word'].apply(
             self._cleanNiqqudChars)
         self.verb_conj_future_filtered['hebrew_word'] = self.verb_conj_future_filtered['hebrew_word'].apply(
+            self._cleanNiqqudChars)
+        self.imperative_verb_df_filtered['hebrew_word'] = self.imperative_verb_df_filtered['hebrew_word'].apply(
             self._cleanNiqqudChars)
 
     def _inflectionVerbs(self, dataframe):
@@ -199,8 +230,6 @@ class SimpleCSV2HTML:
                                        self.verb_conj_future_filtered]
         for verb_file in self.list_of_verb_databases:
             self._inflectionVerbs(verb_file)
-
-
 
     def _cleanNiqqudChars(self, my_string):
         return ''.join(['' if 1456 <= ord(c) <= 1479 else c for c in my_string])
@@ -257,7 +286,7 @@ class SimpleCSV2HTML:
         self.database = self.database.merge(self.verb_conj_future_that, left_on=['id'], right_index=True, how='outer')
 
     def mergeNounPlurals(self):
-        self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state','plural_construct_state',
+        self.database = self.database.merge(self.noun_plural_db[['id', 'plural_state', 'plural_construct_state',
                                                                  'single_construct_state']], on=['id'], how='outer')
 
         print(self.database.head())
@@ -336,13 +365,12 @@ class SimpleCSV2HTML:
                 , 'infl_in', 'infl_that',
              'plural_state', 'infl_the_plural', 'infl_to_plural',
              'infl_from_plural'
-                , 'infl_in_plural', 'infl_that_plural', 'pattern','plural_construct_state','single_construct_state']) + self.adj_infl
+                , 'infl_in_plural', 'infl_that_plural', 'pattern', 'plural_construct_state',
+             'single_construct_state']) + self.adj_infl
         self.csv2html_df = self.database[self.simplifiedDf_list].copy()
         print(self.csv2html_df.head())
 
     @contextlib.contextmanager
-
-
     def _writekeysLoop(self, fname, index, row, pospeech: bool):
 
         fname.write(
@@ -359,8 +387,8 @@ class SimpleCSV2HTML:
 
         for noun_inflection in self.noun_inflection_group:
             if not pd.isnull(row[str(noun_inflection)]):
-                        fname.write(
-                            """<idx:iform value="{inflgrp}" />
+                fname.write(
+                    """<idx:iform value="{inflgrp}" />
 """.format(inflgrp=row[str(noun_inflection)]))
 
         if not pd.isnull(row[self.noun_inflection_group]).all():
@@ -392,8 +420,8 @@ class SimpleCSV2HTML:
 
         for adj_inflection in self.adj_infl:
             if (pd.isnull(row[str(adj_inflection)])) == False:
-                        fname.write(
-                            """<idx:iform value="{inflgrp}" />
+                fname.write(
+                    """<idx:iform value="{inflgrp}" />
 """.format(inflgrp=row[str(adj_inflection)]))
 
         if not pd.isnull(row[self.adj_infl]).all():
@@ -463,20 +491,20 @@ class SimpleCSV2HTML:
 <idx:orth value="{word}"><p><b>{word}</b>
 """.format(id=index, word=row['hebrew_word'], pronunciation=row['hebrew_pronunciation'],
            inflgrp=row['part_of_speech_simplified']))
-#             if not pd.isnull(row[self.adj_infl]).all():
-#                 fname.write(
-#                     """<idx:infl>
-#     """)
-#
-#             for adj_inflection in self.adj_infl:
-#                 if (pd.isnull(row[str(adj_inflection)])) == False:
-#                     fname.write(
-#                         """<idx:iform value="{inflgrp}" />
-# """.format(inflgrp=row[str(adj_inflection)]))
-#
-#             if not pd.isnull(row[self.adj_infl]).all():
-#                 fname.write(
-#                     """</idx:infl>""")
+        #             if not pd.isnull(row[self.adj_infl]).all():
+        #                 fname.write(
+        #                     """<idx:infl>
+        #     """)
+        #
+        #             for adj_inflection in self.adj_infl:
+        #                 if (pd.isnull(row[str(adj_inflection)])) == False:
+        #                     fname.write(
+        #                         """<idx:iform value="{inflgrp}" />
+        # """.format(inflgrp=row[str(adj_inflection)]))
+        #
+        #             if not pd.isnull(row[self.adj_infl]).all():
+        #                 fname.write(
+        #                     """</idx:infl>""")
 
         fname.write("""
     </idx:orth>
@@ -504,6 +532,7 @@ class SimpleCSV2HTML:
                              self.verb_conj_present_filtered,
                              self.verb_conj_past_filtered,
                              self.verb_conj_future_filtered,
+                             self.imperative_verb_df_filtered,
                              self.pronomial_df])
         temp_df.reset_index(drop=True, inplace=True)
 
