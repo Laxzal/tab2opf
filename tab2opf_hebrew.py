@@ -65,6 +65,8 @@ class CreateOPF:
         self.csv2html.importVerbConjFut_ver()
         self.csv2html.importImperativeVerb()
         self.csv2html.importPassivePresentVerb()
+        self.csv2html.importPassivePastVerb()
+        self.csv2html.importPassiveFutureVerb()
         self.csv2html.cleanVerbWord()
         self.csv2html.inflectVerbs()
 

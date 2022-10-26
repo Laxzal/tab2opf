@@ -57,6 +57,10 @@
                 <item id="dictionary15" href="hebrew2english_dict_15.html" media-type="text/x-oeb1-document"/>
                 
                 <item id="dictionary16" href="hebrew2english_dict_16.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary17" href="hebrew2english_dict_17.html" media-type="text/x-oeb1-document"/>
+                
+                <item id="dictionary18" href="hebrew2english_dict_18.html" media-type="text/x-oeb1-document"/>
                 </manifest>
             
             <spine>
@@ -94,6 +98,10 @@
                     <itemref idref="dictionary15"/>
                 
                     <itemref idref="dictionary16"/>
+                
+                    <itemref idref="dictionary17"/>
+                
+                    <itemref idref="dictionary18"/>
                 
 </spine>            
 <tours/>

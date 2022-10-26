@@ -34,12 +34,16 @@ class SimpleCSV2HTML:
         self.adjective_db = "pealim_adjective_table_db.csv"
         self.pronomial_file = "pealim_pronomial_db.csv"
         self.passive_verb_file = "pealim_passive_present_table.csv"
+        self.passive_verb_past_file = "pealim_passive_past_table.csv"
+        self.passive_verb_future_file = "pealim_passive_future_table.csv"
+
         self.noun_inflection_group = ['plural_state', 'infl_from', 'infl_to', 'infl_in', 'infl_that', 'infl_the_plural',
                                       'infl_from_plural', 'infl_to_plural', 'infl_in_plural', 'infl_that_plural',
                                       'plural_construct_state',
                                       'single_construct_state']
         self.verb_inflection_group = ['chaser', 'infl_when_cond', 'infl_that', 'infl_and', 'infl_when_cond_chaser',
                                       'infl_that_chaser', 'infl_and_chaser']
+
         self.from_value = str('מ')
         self.the_value = str('ה')
         self.to_value = str('ל')
@@ -50,6 +54,9 @@ class SimpleCSV2HTML:
         self.verb_conj_present_filtered = None
         self.verb_conj_past_filtered = None
         self.verb_conj_future_filtered = None
+
+
+
 
         self.remove_conv_emoji = r"(:)(.*?)(:)"
         # Automatic Functions to Run
@@ -163,6 +170,8 @@ class SimpleCSV2HTML:
             lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
         self.imperative_verb_df['hebrew_word'] = self.imperative_verb_df['hebrew_word'].apply(
             lambda x: x.replace("!", ""))
+        self.imperative_verb_df['chaser'] = self.imperative_verb_df['chaser'].apply(
+            lambda x: x.replace("!", "") if not pd.isnull(x) else x)
 
         self.imperative_verb_df['gender'] = np.where(
             self.imperative_verb_df[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
@@ -201,7 +210,53 @@ class SimpleCSV2HTML:
         self.passive_verb_df_filtered['niqqud'] = self.passive_verb_df_filtered['hebrew_word'].copy()
         self.passive_verb_df_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
 
+    def importPassivePastVerb(self):
+        self.passive_verb_past_df = pd.read_csv(self.passive_verb_past_file)
+        self.passive_verb_past_df['english_word'] = self.passive_verb_past_df['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.passive_verb_past_df['english_word'] = self.passive_verb_past_df['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+        self.passive_verb_past_df['hebrew_word'] = self.passive_verb_past_df['hebrew_word'].apply(
+            lambda x: x.replace("!", ""))
 
+        self.passive_verb_past_df['gender'] = np.where(
+            self.passive_verb_past_df[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.passive_verb_past_df['gender'])
+        self.passive_verb_past_df = self.passive_verb_past_df.drop_duplicates(
+            ['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+        self.passive_verb_past_df = self.passive_verb_past_df.merge(self.database, left_on='id', right_on='id')
+        print(self.passive_verb_past_df.info())
+
+        self.passive_verb_past_df_filtered = self.passive_verb_past_df[
+            ['id', 'hebrew_word', 'english_word', 'chaser', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified',
+             'meaning',
+             'gender', 'pattern']]
+        self.passive_verb_past_df_filtered['niqqud'] = self.passive_verb_past_df_filtered['hebrew_word'].copy()
+        self.passive_verb_past_df_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
+
+    def importPassiveFutureVerb(self):
+        self.passive_verb_future_df = pd.read_csv(self.passive_verb_future_file)
+        self.passive_verb_future_df['english_word'] = self.passive_verb_future_df['english_word'].apply(
+            lambda x: emoji.demojize(x).strip())
+        self.passive_verb_future_df['english_word'] = self.passive_verb_future_df['english_word'].apply(
+            lambda x: re.sub(self.remove_conv_emoji, "", x).strip())
+        self.passive_verb_future_df['hebrew_word'] = self.passive_verb_future_df['hebrew_word'].apply(
+            lambda x: x.replace("!", ""))
+
+        self.passive_verb_future_df['gender'] = np.where(
+            self.passive_verb_future_df[['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser']].duplicated(
+                keep=False), str('both'), self.passive_verb_future_df['gender'])
+        self.passive_verb_future_df = self.passive_verb_future_df.drop_duplicates(
+            ['id', 'verb_form', 'person', 'hebrew_word', 'english_word', 'chaser'])
+        self.passive_verb_future_df = self.passive_verb_future_df.merge(self.database, left_on='id', right_on='id')
+        print(self.passive_verb_future_df.info())
+
+        self.passive_verb_future_df_filtered = self.passive_verb_future_df[
+            ['id', 'hebrew_word', 'english_word', 'chaser', 'word', 'hebrew_pronunciation', 'part_of_speech_simplified',
+             'meaning',
+             'gender', 'pattern']]
+        self.passive_verb_future_df_filtered['niqqud'] = self.passive_verb_future_df_filtered['hebrew_word'].copy()
+        self.passive_verb_future_df_filtered.rename(columns={'word': 'infinitive'}, inplace=True)
 
     def importPronomialNoun(self):
         self.pronomial_df = pd.read_csv(self.pronomial_file)
@@ -232,6 +287,8 @@ class SimpleCSV2HTML:
             self._cleanNiqqudChars)
         self.passive_verb_df_filtered['hebrew_word'] = self.passive_verb_df_filtered['hebrew_word'].apply(
             self._cleanNiqqudChars)
+        self.passive_verb_future_df_filtered['hebrew_word'] = self.passive_verb_future_df_filtered['hebrew_word'].apply(
+            self._cleanNiqqudChars)
 
     def _inflectionVerbs(self, dataframe):
 
@@ -255,7 +312,8 @@ class SimpleCSV2HTML:
 
     def inflectVerbs(self):
         self.list_of_verb_databases = [self.verb_conj_present_filtered, self.verb_conj_past_filtered,
-                                       self.verb_conj_future_filtered, self.passive_verb_df_filtered]
+                                       self.verb_conj_future_filtered, self.passive_verb_df_filtered,
+                                       self.passive_verb_past_df_filtered]
         for verb_file in self.list_of_verb_databases:
             self._inflectionVerbs(verb_file)
 
@@ -562,6 +620,8 @@ class SimpleCSV2HTML:
                              self.verb_conj_future_filtered,
                              self.imperative_verb_df_filtered,
                              self.passive_verb_df_filtered,
+                             self.passive_verb_past_df_filtered,
+                             self.passive_verb_future_df_filtered,
                              self.pronomial_df])
         temp_df.reset_index(drop=True, inplace=True)
 
