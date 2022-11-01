@@ -24,12 +24,11 @@ class SimpleCSV2HTML:
 
         self.database_fname = database_fname
         self.database = None
-        self.csv_noun_plural = r"/Users/calvin/Documents/hebrew_dictionary/pealim_noun_db.csv"
+        self.csv_noun_plural = r"pealim_noun_db.csv"
         self.list_file_names = []
-        self.verb_conj_present_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_present_table_db.csv"
-        self.verb_conj_past_file = r"/Users/calvin/Documents/hebrew_dictionary/pealim_verb_past_table_db.csv"
-        self.verb_conj_future_file = r"/Users/calvin/Documents" \
-                                     r"/hebrew_dictionary/pealim_verb_future_table_db.csv"
+        self.verb_conj_present_file = r"pealim_verb_present_table_db.csv"
+        self.verb_conj_past_file = r"pealim_verb_past_table_db.csv"
+        self.verb_conj_future_file = r"pealim_verb_future_table_db.csv"
         self.imperative_verb_file = "pealim_verb_imperative_table_db.csv"
         self.adjective_db = "pealim_adjective_table_db.csv"
         self.pronomial_file = "pealim_pronomial_db.csv"
@@ -607,7 +606,7 @@ class SimpleCSV2HTML:
         if sys.platform == "darwin":
             os.chdir("/Users/calvin/PycharmProjects/tab2opf_git")
         else:
-            print('chng')
+            os.chdir("C:/Users/Calvin/PycharmProjects/tab2opf_hebrew/csv2opf")
         # Quick switch
         self.csv2html_df['part_of_speech_simplified'] = self.csv2html_df['part_of_speech_simplified'].str.replace(
             'Verb', 'Infinitive Verb')

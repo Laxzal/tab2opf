@@ -23,6 +23,8 @@
 <!-- list of all the files needed to produce the .prc file -->
 <manifest>
         <item id="cover" properties="cover-image" href="design2.jpg" media-type="image/jpeg"  />
+        <item id="alephbet" href="alephbet.html" media-type="application/xhtml+xml" />
+        <item id="intro_page" href="introPage.html" media-type="application/xhtml+xml" />
             
                 <item id="dictionary0" href="hebrew2english_dict_0.html" media-type="text/x-oeb1-document"/>
                 
@@ -65,6 +67,9 @@
             
             <spine>
             <itemref idref="cover" />
+            <itemref idref="alephbet" />
+            <itemref idref="intro_page" />
+
                     <itemref idref="dictionary0"/>
                 
                     <itemref idref="dictionary1"/>
